@@ -1,0 +1,440 @@
+[INDEX]
+
+<Hook 모음집>
+1. "useState" HOOK
+2. "useRef" HOOK
+3. "useHistory" HOOK [react-router-dom 패키지]
+4. "useEffect" HOOK
+5. "createContext , useContext Hook"
+6. "useSWR" Hook
+
+<자바스크립트>
+
+1. .push() && .concat() 의 차이 [배열 안의 값 삽입]
+2. filter   [배열 안의 값을 filter]
+3. some [ 무언가 하나라도 참인가? ] : 값이 배열내에 존재하는지 확인하는 함수로 자주쓰이는
+4. import 할때, [{ } 안에서 import 되면, 그 안의 함수가] , [그냥 이름으로 import 하면 파일 자체]가 import 된다.
+    
+================================================================================================
+<Hook 모음집>
+
+1. "useState" HOOK
+    : "화면에 표시되는 값" 혹은 "상태" 를 "동적으로 변경하기 위한", 리액트의 Hook 이다.
+
+-   ** 원리: 
+        "useState 는 두개의 상태를 반환" 한다. "현재 상태" , "업데이트 될 상태"
+
+        "상태가 업데이트" 될 때마다, State Hook 은, "전체 component 를 재시작"한다.(초기화 라고 보면 간단하다.)
+
+        그리고, "그 상태에 맞는 코드를 실행"한다.
+
+
+-   사용:
+        import {useState} from "react"
+
+        function function(){
+            const [현재변수, set업데이트변수] = useState(현재 값) 
+    
+            "변할 변수"를 잘 조정해서 사용한다.
+        }
+
+-   사용하는곳:
+        : fetch 등으로, 변화하는 데이터,
+        : 유저의 동작으로, 유동적으로 변하는 데이터,
+        : Popup 창이 나타나는, 페이지 상태변화
+        등등... "모든 변하는 상태에 대하여 가능"
+
+-   .concat() 과 useState의 관계
+
+        : Array.concat() 은 "기존배열을 복사하고 추가하여 새로운 배열을 반환한다."
+
+            그러므로, "업데이트" 를 위한 "두번째 변수에" 
+-           set업데이트변수(Array.concat(xx))           * 대부분은  "현재변수.concat(xxx)" 해서 업데이트;
+
+            를 한다면, 현재변수는 바뀌지 않은채, 업데이트에 새 배열이 반환되어 들어가기때문에,
+            안정적으로 업데이트가 가능하다
+
+-   항상 최신 스냅샷으로, useState 를 업데이트 하는 방법
+
+        1) 일반적으로   :   [대부분 일반적인 경우]
+
+            const [count , setCount] = useState([])
+
+            function addCountHandler(num){
+                setCount(count.concat(num))
+            }
+
+        2) 항상최신 스냅샷 : [useState를 사용하여, 화면을 업데이트할때] , [setCount() 안에 콜백함수를 실행할 경우", "콜백함수의 파라미터"에는, 자동으로 "현재상태" 가 들어간다]
+
+            :"useState"는 새 값을 받을때, "새 값을 받자마자, 화면에 표시되는 무언가를 업데이트(Card가 하나 더생긴다던가...)"
+                할 때에," useState로 업데이트 된 값이 반영되는것이, 화면 업데이트보다 느려서, 실제로 화면에 반영되지 않을 수 있다".
+            
+    -       ==> 콜백함수를 사용하여, 상태업데이트를 실행한다.
+
+            const [count , setCount] = useState([])
+
+            function addCountHandler(num){
+                setCount((previousCount)=>{
+                    return previousCount.concat(num)
+                } )
+            }
+            
+-           * "setCount() 안에 콜백함수를 실행할 경우", "콜백함수의 파라미터"에는, 자동으로 "현재상태" 가 들어간다.
+-               => setCount((previousCount) =>{}) 에서 "previousCount" 는 "count 가 들어가는 것"이다.
+
+                    Arr.map(function(item){
+                        return item.key
+                    })
+-                   에서 "item" 이 "Arr" 를 받듯
+
+
+
+https://react.vlpt.us/basic/07-useState.html
+
+2. "useRef" HOOK
+    : "값을 읽거나, 사용하기 위한" 리액트의 Hook
+
+    사용
+-       : import {userRef} from "react"
+
+        function function(){
+-           const 저장할변수1 = useRef()                         ==> 저장됌
+            const 저장할변수2 = useRef()
+            ...
+
+            function submitHandler(){
+-               const enteredTitle = 저장할변수1.current.value          ==> 사용하기
+                const endteredImage = 저장할변수2.current.value 
+                ...
+
+                const allData={
+-                   title:enteredTitle,
+                    image:endteredImage,
+                    ...
+                }
+            }
+    
+            <form>
+                <label htmlFor="title">
+-               <input type="text" id="title" ref={저장할변수1} >            == 저장시키기
+                <label htmlFor="image">
+                <input type="url" id="image" ref={저장할변수2} >
+                ...
+        }
+
+       " 저장할변수1.current" 에는, ref 로 저장한, 모든 값이 들어가있고,
+       "저장할변수1.current.value" 그 모든 값의 value 가 들어가있다.
+
+3. "useHistory" HOOK [react-router-dom 패키지]
+    : "페이지를 이동"시킬 수 있는 HOOK
+
+    사용 : 
+    
+-   import {useHistory} from "react-router-dom"
+
+    function NeewMeetupPage(){
+-       const history = useHistory();
+
+        function eventHandler(){
+            fetch (
+                ...
+            ).then(()=>{
+-               history.replace("/");
+            })
+        }
+    }
+
+    ==> [history 는]
+        history.push()
+        history.replace()
+        history.action()
+        history.goback()
+        ....
+        음청 많다. 확인하도록 하자
+
+4. "useEffect" HOOK
+    : "변화하는 조건을 지정해", "그 조건이 변화하면 실행하는 Hook"
+        
+        1. 만약, 아무 조건을 지정하지 않으면, "모든 렌더 완료시마다 (State에 의한 상태변경, 최초 렌더 등...)" 실행되고,
+
+            useEffect(() => {
+                console.log("useEffect!!", count);
+            });
+
+        2. [] 빈 조건을 지정하게 되면, "최초 렌더시에만 실행"
+
+            useEffect(() => {
+                console.log("useEffect!!", count);
+            }, []);
+
+        3. [] 안에 조건 을 지정하게 되면, "조건이 변경될때에만 실행"
+            
+            const [count, setCount] = useState(0)
+
+            const countup = () => {setCount(count+1)}
+            
+            useEffect(() => {
+                console.log("useEffect!!", count);
+            }, [count]);
+
+
+5. "createContext , useContext Hook"
+    : "전역으로 사용 가능한, component 인", "Context" 를 만드는, Hook
+
+    1. createContext Hook
+
+        import {createContext} from "react"
+
+        const ArrayContext = createContext({
+            a : 1,
+            b : 2, 
+            ...
+        })
+
+-       export function ArrayContextProvider(props){
+            사용할 함수들...
+            사용할 State에 담긴 변수들...
+
+            context = {
+                a : state에 담긴값..
+                b : state에 담긴 값...
+                내보낼함수이름1 : 내보낼함수이름1 ,
+                내보낼함수이름2 : 내보낼함수이름2 ,
+                ...
+            }
+            
+            return(
+                <ArrayContext.provider value={context}>
+                    {props.children}
+                </ArrayContext.provider>
+            )
+        }
+
+-       export default ArrayContext
+
+
+            ==>> 이후, index.js 에서, 전체 App을 묶어 사용
+            ==>> context 는 "전역으로 들어가 사용될 값"들의 모음
+-           ==>> export 에 주의하자 (두 곳)
+            ==>> 쓰진 않았지만, createContext 로 초기값을 지정할때, 
+
+                    함수이름1 : (파라미터) => {}
+                    함수이름2 : (파라미터) => {}
+
+                    처럼 빈 함수를 지정해두면, 나중에 자동완성기능이 켜져서 편하다.
+
+    2. useContext
+        
+        import {useContext} from "react"
+
+        import ArrayContext from "../store/..."
+
+        const arrayContext = useContext(ArrayContext)
+
+            이제 사용
+        
+    
+6. useSWR hook from "swr"
+
+    npm install swr
+    import useSWR from "swr"
+
+    const fetcher = (url) => fetch(url).then((res) => res.json());
+    const { data, error } = useSWR("데이터불러올 URL", fetcher)
+
+        https://swr.vercel.app/ko 참조
+        https://codesandbox.io/s/swr-basic-p7dg6?from-embed=&file=/src/App.js 참조
+
+    
+
+<자바스크립트>
+
+1. .push() && .concat() 의 차이 [배열 안의 값 삽입]
+
+    1) push() => 기존 배열에, 추가하여, "기존 배열을 바꾼다".
+            
+        const array = [1,2]
+        array.push(3)
+        
+        ==> array = [1,2,3]
+
+    2) concat() => 기존 배열을 복사하고, 추가하여, "새 배열을 반환한다", "기존 배열은 바뀌지 않는다."
+
+        const array = [1,2]
+        const result = array.concat(3)
+
+        ==> array = [1,2]
+            result = [1,2,3]
+
+2. filter   [배열 안의 값을 filter]
+
+    .filter(item){
+    return item.key == xxx.key
+    }
+
+    .filter((item)=>{
+        return item.key == xxx.key
+    })
+
+    .filter(item => item.key === xxx.key)
+
+3. some [ 무언가 하나라도 참인가? ] : 값이 배열내에 존재하는지 확인하는 함수로 자주쓰이는
+    : 반환값은 Boolean
+
+    1) 기본사용
+        Array = [1,5,10,15]
+
+        Array.some((num) => num>10)  => true
+
+        Array.some((num) => num>16)  => false
+
+    2) 값이 배열내에 존재하는지 확인
+
+        Array = ["apple", "banana", "mango"]
+
+        function CheckArray(array,valve){
+            return array.some((fruits)=> fruits === valve)
+        }
+
+        function(Array, "apple") => true
+        function(Array, "choco") => false
+
+4. import 할때, [{ } 안에서 import 되면, 그 안의 함수가] , [그냥 이름으로 import 하면 파일 자체]가 import 된다.
+
+5. .find() : 조건을 만족하는 "첫번째 값"
+
+6. new Date() 에서, "Year 를 뽑는 .getFullYear()" , "month 를 뽑는 .getMonth()"
+
+    2022-10-09
+
+    getFullYear => 2022
+    getMonth => 9
+
+    * getMonth 는 "현재 월 -1 " 한 값이 리턴된다.
+
+7. 경로 앞에 "/" 를 붙여야 "상대경로가 되고" , "상대 경로가 되어야 이곳저곳에서 같은 경로로 불러올 수 있다."
+
+8. fs(file system) 에 접근하기 + path + process.cwd()
+
+        
+    const jsonData = await fs.readFile( 파일위치 )
+    const path = path.join("폴더이름","폴더이름"..."폴더이름", "파일이름")
+
+
+    * cwd = current working directory : 현재 사용중인 폴더를 위치로 한다.
+-   ** 중요한 점은, Next.js 가 코드를 실행 시킬때, [모든 파일이 루트 폴더에 있다고 생각하고 실행시킨다]
+    그러므로, Next.js에서 path를 사용할때 process.cwd() 는, 가장 루트 폴더가 되는것이다.
+
+    ============
+
+        export async function getStaticProps() {
+-           const filePath = path.join(process.cwd(), "data", "dummy-backend.json");
+-           const jsonData = await fs.readFile(filePath);
+            const productData = JSON.parse(jsonData);
+  
+            return {
+            props: {
+                product: [
+                { id: "product1", title: "productName1" },
+                { id: "product2", title: "productName2" },
+                ...productData.products,
+                ],
+            },
+            };
+        }
+        export default HomePage;
+
+    =============
+      
+9. for...in 으로 객체 안의 객체들 { {}, {}, {} } 배열로 만들기 ----- [헷갈림주의]
+
+    const data = {  s1 : {username:"ms", volume:50} ,  s2 : {username:"js", volume:100} ... }
+
+    const trasnformData = [];
+
+    for (const key in data) {
+    trasnformData.push({
+        id: key,
+        username: data[key].username,
+        volume: data[key].volume,
+    });
+
+    ** "for...in" 에서, (const key in data) 라 하면,
+        각 객체안의 객체  s1 : {username:"ms", volume:50}  이 선택되고
+
+        key = s1
+        data[key].username = s1.username 
+        data[key].volume = s1.volume
+
+        이 되는것이다
+
+    "for...in" 안에 있는 "파라미터" 는 [객체 안의 각각의 key] 를 뽑는다는 사실을 까먹지 말고
+    " 전체객체[key] " 라는 "특수한 코드"를 이용, "각 객체 안의 객체키 값"에 접근할 수 있다는 사실을 잊지 말자.
+
+-   * data.s1 도 아니고 data[s1] 이라니, "객체에서 참 요상"하지만 "이건 외우자"
+
+    *** [ 적절한 key와 value 로 객체 안이 구성되어 있다면, 그대로 ... 을 통해 가져와도 된다.]
+
+        for (const key in data) {
+            reformData.push({
+            id: key,
+            ...data[key],
+            });
+        }
+
+10. func.bind() **
+
+-   1. 전체적용 [ 강제로, 함수에서, this(context) 를 고정시켜주는 bind()]
+
+        func.bind(context)는 함수처럼 호출 가능한 '특수 객체(exotic object)'를 반환합니다. 
+            이 객체를 호출하면 "this가 context로 고정된 함수 func가 반환"됩니다.
+
+        따라서 boundFunc를 호출하면 "this가 고정된 func를 호출하는 것과 동일한 효과"를 봅니다.
+
+        아래 funcUser에는 "this가 user로 고정된 func"이 할당됩니다.
+
+            let user = {
+            firstName: "John"
+            };
+
+            function func() {
+            alert(this.firstName);
+            }
+
+            let funcUser = func.bind(user);
+            funcUser(); // John
+
+        ** "변수 funcUser 로 묶지 않고", func.bind(user) 으로 "직접사용" 해도 상관없다.
+ 
+
+
+-   2. 부분적용 [ this(context)는 아무거나(null), 첫번째로 수신한 아규먼트(인수)는 X 로 설정하는, 부분적용 "func.bind(null, X)"]
+
+        ==> 부분적용이란, 
+            func.bind(context , arg1, arg2...) 라 할때,
+            "전체적용"처럼   bind의 첫번째 값(context)는, 적용할 함수의 "this" 를 고정시켜주는 역할을 하고
+                            bind의 두번째 이후 값(arg1, arg2 ...) 은, "적용할 함수의 파라미터에 들어갈 아규먼트"를 "고정"시켜 주는 역할을 한다.
+
+            function mul(a, b) {
+            return a * b;
+            }
+
+            let double = mul.bind(null, 2);
+
+            alert( double(3) ); // = mul(2, 3) = 6
+            alert( double(4) ); // = mul(2, 4) = 8
+            alert( double(5) ); // = mul(2, 5) = 10
+
+        ==> 위의 함수 mul에는 파라미터가 두개 있다.
+            위의 함수 mul은,    "객체안의 함수"(메서드) 가 아니므로, this 라 해도 받을 것이 없다.
+            그러므로, "첫번째 파라미터 안에 들어갈 인수(아규먼트)" 만을 "고정" 시켜주기 위해,
+
+            [   func.bind(null, 3)  ]
+
+            을 사용한다면," this는 상관 없으니 null", "첫번째 아규먼트를 3으로 고정시킨 함수가 재탄생"하는것이다.
+
+                ** "변수 double 로 묶지 않고", mul.bind(bull,2) "직접 사용"해도된다.
+
+                ** bind 를 사용할때는 "context는 항상 넘겨주어야 하니", 
+                    "아규먼트를 고정시키면서, 메서드(객체 안의 함수)가 아니라면" 
+                    항상 "bind의 첫번째 값은 null" 로 적용시키고, "두번째 값을 사용하도록"하자

@@ -1,0 +1,227 @@
+1. 파일 베이스 라우팅 기본
+
+    "pages 폴더" 안에 넣은, "파일 이름" 이 바로 "page URL"이 된다.
+
+       ** 예외사항 index.js => 이건 그냥 "/"
+
+    "pages/product/index.js"  => http://localhost:3000/product
+    "pages/product/about.js"  => http://localhost:3000/product/about
+    "pages/index.js"    => http://localhost:3000/
+    "pages/about.js"    => http://localhost:3000/about
+
+2. [동적 경로 추가하기] - 파일 베이스 라우팅 
+
+    "pages" 폴더 안에 "파일 이름을"  
+
+        [동적이름].js  
+
+    으로 만든다.
+
+        [id].js
+        [productid].js 
+    등등...
+
+3. [ 동적 경로 추출하기 ] - "useRouter Hook" from "next/router" , ".pathname" , ".qurey"
+
+    // router 이름 = URL 주소 = [productid].js
+
+-   import { useRouter } from "next/router";
+
+-   function productDetailPage() {
+-       const productid = useRouter();
+
+-       console.log(productid.pathname);    ==>> /product/[productid]
+-       console.log(productid.query);       ==>> {productid : "넣은 url 이름"}
+
+        return (
+            <div>
+            <h1> Product DetailPage </h1>
+            </div>
+        );
+    }
+
+    export default productDetailPage;
+
+    ==> 근데 두번씩나옴. 왜? 아직모름
+
+4. [동적 경로 추가하기] - ["동적 경로 안"의 또다른 "동적 경로"] - 중첩된 동적 세그먼트
+
+    : "폴더 이름"도, [] 으로 만들어서, 두가지의 동적 경로를 받을 수 있게 한다.
+
+    client / [id] / [clientproductid].js
+    product / [productid] / [productdetail].js 
+    ...
+
+    ==> [id] 와, [productid]  는 "폴더이름" 으로, "폴더도 동적경로로 받을 수 있다."
+        물론, 폴더 안에, "index.js" 하나는 있어야 보이겠지
+
+5. [동적 경로 추가하기] - "배열로 값을 전부 받기"  [...filename].js"
+
+    : "파일 이름" 앞에 "스프레드 연산자"를 붙이면   [...XXX].js
+
+        "URL 뒤에 붙은 모든 것들이, 배열로 받아진다."
+
+    blog / [...post].js
+
+    ==> http://localhost:3000/blog/audtlr/fkffkf
+        console.log(RotuerName.query);
+
+-       => post : ["audtlr","fkffkf"] 
+
+    ==> http://localhost:3000/blog/what/ever/you/want
+        console.log(RotuerName.query);
+
+-       => post :['what', 'ever', 'you', 'want']
+
+
+[3~5 결론]
+
+    1. "동적 폴더이름" 을 사용하면, "여러 개의 동적 값을 동시"에 받을 수 있다.
+    2. import useRouter from "next/router" 를 통해, 값을 받을 수 있는 hook을 만들 수 있다.
+    3. useRouter 로 값을 받으면, "객체 형태로 값을 받는다."
+    4. "객체의 키" 는, [동적인 폴더 혹은 파일명], "객체의 값은" [동적으로 받은 URL 값] 
+    5. "여러 키(동적 폴더 안의 동적 파일)를 동시에 받은 동적 값" 은 각각의 키와 각각의 값을 알아서 객체로 받는다.
+
+    6. "배열로 값을 받고 싶다면" 스프레드 연산자를 사용하도록하자." URL/xx/yy/zz" URL 뒤의 모든 값을, 배열로 받을 수 있다.
+-             **** 검색할때 매우 유의미
+    
+
+6. [네비게이팅 하기] - Link 연결  [a 태그를 사용하지 않는 이유]
+    : 앵커태그는, HTTP 요청을 통해, 새 페이지를 받고, 로드하게 만든다.
+
+    "문제는" React 를 실행중일때, React app의 "State" 가 변한다는 것이다.
+    
+-   State 가 변하면 , Context 에 담겨 있는 값(State) 나, app-wide(아마도 설정값) 이 변경(삭제)될 수 있다는 말이다.
+
+-   "또한" React의 장점인, single page 시스템이 아닌, 페이지의 요청을 새로 받는 형식이라, React를 쓰는 의미가 사라진다.
+
+    ==>> React와 같이, Next도 "Link" 를 사용한다.
+
+                    *참고
+                    : React 에서는 , "react-router-dom"; 패키지를 가져와
+                        import { Link } from "react-router-dom";
+                        <Link to="/">  ... <Link>
+
+    1. 연결하기
+-       : Link 를 "next/link" 에서 가져와, 사용은 앵커태그와 완전히 같다.
+
+        import Link from "next/link";
+
+        function Homepage() {
+            return (
+                <div>
+                    <Link href={"/product"}> TO product page</Link>
+                </div>
+            );
+        }
+
+        ** 중요한것은, "Link 안에 중괄호가 없다는것"
+
+    2. Link 강화하기 [ Link 의 여러가지 기능들 ]
+        : Link 에는 여러 옵션들이 존재한다.
+
+        1) replace
+            : 새페이지가 아닌, 현 페이지 자체를, 교체시켜, 뒤로가기가 불가능
+
+            <Link replace href={"/product"}> TO product page</Link>
+        
+        2) scroll
+            : 페이지 불러온 후, 페이지 상단으로 스크롤
+
+            <Link scroll href={"/product"}> TO product page</Link>
+
+        3) prefetch
+            : 백그라운드에서 미리 다음 페이지를 가져옴
+
+            <Link prefetch href={"/product"}> TO product page</Link>
+
+        등등...
+
+
+7. [네비게이팅 하기] - 서버에서 받은 "배열 객체 데이터"로 "리스트 만들기" - map 의 활용 , key 는 어디에 넣을까?
+    : 대부분 "서버에서 받은 데이터" 로, "동적인 리스트를 만들것"이다.
+    
+        import Link from "next/link";
+
+        const clientList = [
+        { id: "hi", name: "fnffn", age: 30 },
+        { id: "my", name: "akqjs", age: 25 },
+        { id: "lol", name: "ekdskrnl", age: 15 },
+        ];
+
+        function ClientPage() {
+        return (
+            <div>
+            <h1> Client Page</h1>
+            <ul>
+-               {clientList.map((client) => (
+    -               <li key={client.id}>
+    -                   <Link href={`/client/${client.id}`}> {client.name}</Link>
+    -               </li>
+-               ))}
+            </ul>
+            </div>
+        );
+        }
+        export default ClientPage;
+
+    ==> 중요한 점은
+-       map 의 활용방법
+-       key 는 어디에 썻는가?
+-       href 안에 `` 를 써서 동적 경로를 전달했는가?
+
+8. [네비게이팅 하기] href 등, 페이지를 이동하는 URL의 대안
+    : 반드시, 유저가 "URL 을 입력해서", 혹은, "Link 의 href="/client/audtlr/..."" 라고 입력해야만, 동적 경로로 이동이 가능할까?
+    
+    : "조금더 명시적인" 대안이 있다.
+
+    Link href={ 
+        {
+            pathname:"client/[clientid]/[clientdetail]"
+            query : {clientid : "audtlr" , clientdetail : "hello"}
+        }
+    }
+
+    => http://localhost:3000/client/audtlr/hello
+
+-   ==>> client 폴더 //  clientid 폴더 // clientdetail 페이지로 들어가돼, 
+-       그 안에 들어갈 동적 값을 query 로 정해주는 방법이다.
+
+
+9. [네비게이팅 하기] - "FORM 에 이용하기 좋은" "프로그래밍 적 방법 (Link 태그가 아니라)" 으로 페이지 이동하기 [useRouter 의 활용]
+    : useRouter() 를 사용하면   ".push" , ".replace" 로 페이지 이동을 할 수 있다.
+
+    ==> FORM 을 이용할때, 사용하면 좋겠다. (어차피 FORM 에서 데이터 넘길때는 FETCH가 들어간 자바스크립트 함수를 사용할 것이니)
+
+-   import { useRouter } from "next/router";
+
+    function DeepClientPage() {
+-   const clientid = useRouter();
+
+        function MovePage() {
+-           clientid.push("/");
+        }
+
+        return (
+-           <button onClick={MovePage}> home </button>
+        );
+        }
+
+    export default DeepClientPage;
+
+10. [네비게이팅 하기] - "프로그래밍 적 방법 도, "명시적인 방법으로(pathname 과 query) 가 가능하다"
+
+    function MovePage() {
+-           clientid.push({
+                pathname : "/product/[productid]"
+                query:{productid : "wow "}
+            });
+    }
+
+11. 404 페이지 만들기 - pages의 루트폴더에, 404.js 를 만들어 넣으면, 커스텀 404 페이지를 만들 수 있다.
+
+12. 그래서 왜 nextjs 를 사용하는가? 코드 기반 라우팅을 하는 기본 React가 아니고?
+    => 어차피 만들어야하는 component 를 만들면, 자동으로, ROUTER 에 연결됌
+    => 파일 = ROUTER 이기 때문에, 직관적이고 설정하기 편함
+    => Route 를 연결하는 다른 코드들이 필요 없어서, 간단해짐
+

@@ -1,0 +1,1001 @@
+[INDEX]========================================================================================================================================
+
+0. Router page와 Component
+1. Router의 사용 : React 의 사용 이유
+2. router 타사 패키지의 설치 [강의를 위해 5버젼 설치]
+3. Router 는 URL에 따라, 변화하는 페이지를 구현한다.
+4. Router 페이지의 구현 세팅
+5. Router 페이지의 "구현경로 생성" 및 "경로에 따른 페이지 렌더" [ Route ]
+    * TIP.  코드에 [import {} from ""] 이렇게만 치면, "" 에 자동완성이 생기고, 그 후에 { } 안에 자동완성된것중에 찾으면 편하다.
+6. 왜 이렇게 하고, URL을 입력했는데, 중첩된 페이지가 두개씩 렌더되는가? [ Route 의 구동원리] 
+7. 정확히 URL 이 일치하는 페이지만 로드하기 [ Switch, exact ]
+8. URL 변경하는 버튼 만들기 [ 앵커태그 아니고 Link]
+9. Link 만들기  [<Link to=""> </Link>]
+10. CSS 가 적용되는 원리, 적용시키는 두가지 방법
+11. 반복 배열문 만들기, "{[<li>item1</li>, <li>item2</li>, ...]}" 그리고, " .map() " => 무한증식 배열의 기초
+12. Component 에서 "List"와 "Items" 만들기
+    [Array.map( (xxx) => () ) , Array.map( (xxx) => { return xxx...}) 둘의 차이점에 대하여]
+13. div 가 아닌, [스타일을 설정한 Layout, Card ]를 통하여, Card 형식의 컨텐츠들을 통일시켜 관리하기 [**props.children]
+14. 기본적으로 React 에서 양식을 만들때는, [양식 전체를 감싸는 Card component]와 [그 안에 들어가는 form component] 를 만들어 사용한다.
+15. <input type="url"> [URL 을 담는 input type]
+16. 다시 말하는 Layout 의 장점
+17. 폼에 입력된 값 처리하기 - React 로, Form Data 받고, 처리하기 [ref , useRef]
+   
+18. 폼에 입력된 값 처리하기 - React에서, DB 로 POST 하기 [자식(실제데이터있는)에서는 함수를 실행하고, [함수 실행문은 부모측에서 동적으로 넣어주기]] 
+    부제 : "자식이, 함수형 props" 를 "부모로부터 함수 실행문을 받아" "실행시키는 방법"
+
+19. POST 요청을 전달한 이후, 페이지를 빠져나오기 [ useHistory Hook ]
+
+20. 페이지가 렌더될때마다, DB의 데이터를 가져오는 "Data Fetching" 하기 [useState, useEffect HOOK ]
+[extra. 헷갈릴 수 있는것 바로잡기]
+21. Context 다루기 [ store 폴더에서, 전역으로 사용가능한, component] , [createContext , useContext HOOK]
+
+========================================================================================================================================
+
+0. Router page와 Component
+    : Router page
+        => 한 페이지를 꾸밀 곳으로, 반복되지 않고, 그 한 페이지의 내용을 포함하는 것이 전부
+        
+    : Component
+        => 계속 반복해서 사용할 코드들 "Header" , "Footer", "NavBar" 등이 포함된 코드
+
+1. Router의 사용 : React 의 사용 이유
+    : SPA 의 장점이 나온다. 새 페이지를 렌더하고 FETCH 하는것이 아니라,
+        어차피 "한 페이지"에서 "계속 변화하는" 눈속임을 하는것이라.
+        "반응이 매우 빠름"
+
+2. router 타사 패키지의 설치 [강의를 위해 5버젼 설치]
+
+    npm install --save react-router-dom@5
+
+3. Router 는 URL에 따라, 변화하는 페이지를 구현한다.
+
+4. Router 페이지의 구현 세팅
+
+    <index.js> (연결하는 메인 파일) 에서,
+-   import {BrowserRouter } from "react-router-dom"
+    을 하여, "BrowserRouter" 를 임포트하고
+
+-       App 을 렌더할때, 사용하도록 감싸준다.
+
+    root.render(
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    );
+
+5. Router 페이지의 "구현경로 생성" 및 "경로에 따른 페이지 렌더"
+    : 앞서, "index.js"에서  "App.js 에, BrowserRouter 를 통해, 라우터를 사용 할 수 있게" 만들었다.
+    
+    이제 "App.js" 에서, "라우터를 사용해, URL 경로를 설정"하고 "그에따른 렌더페이지를 결정"한다.
+
+    <App.js> 에서
+-   import { Route } from "react-router-dom";
+    를 사용하여 "Route" 를 임포트하고,
+
+-   <Route path="/">
+        렌더할 페이지
+-   <Route>
+
+        를 사용하여, 원하는 URL 마다, 렌더할 페이지를 넣는다.
+
+* TIP.  코드에 [import {} from ""] 이렇게만 치면, "" 에 자동완성이 생기고, 그 후에 { } 안에 자동완성된것중에 찾으면 편하다.
+
+6. 왜 이렇게 하고, URL을 입력했는데, 중첩된 페이지가 두개씩 렌더되는가?
+    : Route의 작동원리에 대하여 알아야한다.
+
+    Route 의 작동원리는, 전체 코드를 보았을때, "일치하는 URL 페이지 전부를 렌더 한다."
+
+    <Route path="/">
+        ..
+    <Route path ="/Favorite">
+
+    ==> URL "domain/Favorite" 을 접근한다면, "/" 도 있고, "/Favorite" 도 시작점이 일치하기 때문에 "일치하는 두 페이지 모두 렌더된다."
+
+7. 정확히 URL 이 일치하는 페이지만 로드하기 [ Switch, exact]
+    : Switch => 모든 Route 의 path 중," 일치하는 페이지가 발견되면" 이후 Route로 더이상 진행하지 않고,
+        "일치한 페이지 하나만 렌더"한다.
+
+    : exact => "정확히 일치하는 URL" 에 한해 렌더한다.
+
+-       import { Route, Switch } from "react-router-dom";
+
+-       <Switch>
+-           <Route path="/" exact>
+                <AllMeetupsPage />
+            </Route>
+-           <Route path="/Favorite" exact>
+                <FavoritePage />
+            </Route>
+-           <Route path="/NewMeetup" exact>
+                <NewMeetupsPage />
+            </Route>
+-       </Switch>
+
+        ==> "Switch" 로 모든 Route 를 감싸, "일치하는 한 페이지만 로드"하게 하고,
+        ==> Route 안에는, "exact" 조건을 통해, "정확히 일치하는 페이지만 렌더한다."
+
+8. URL 변경하는 버튼 만들기 [ 앵커태그 아니고 Link]
+    
+    Link 를 왜 사용하는가?
+        : 앵커태그는, 
+
+        <앵커태그>
+            [   서버 -  react 를 가동하는 서버]
+            [ 앵커태그가 보낸 요청에, 서버의 응답 ]
+            [ 라우트가 어떤 URL 을 보낼지 검색]
+            [ 그 페이지 렌더]
+
+        <Link>
+            [ URL 을 서버에 요청하지 않고, React와 JavaScript 를 적절히 사용하여, 화면에 표시되는 것만 변경시킴 ]
+
+9. Link 만들기
+    : react-router-dom 에서 {Link} 를 임포트 한 후에,
+         "앵커태그 처럼" 만들면 된다. "href 대신, to" 를 사용한다.
+
+        import { Link } from "react-router-dom";
+
+        function MainNavBar() {
+        return (
+            <header>
+                <div>React Meetup</div>
+                <nav>
+                    <li>
+-                       <Link to={"/"}> All meet ups</Link>
+                    </li>
+                    <li>
+-                       <Link to={"/Favorite"}> Favorite</Link>
+                    </li>
+                    <li>
+-                       <Link to="/NewMeetup"> new meet ups</Link>
+                    </li>
+                </nav>
+            </header>
+        );
+        }
+
+10. CSS 가 적용되는 원리, 적용시키는 두가지 방법
+
+    모든 파일의 최종 도달 위치는 index.js 이고,
+    index.js 는, index.html 의 특정 위치에 부착된다.
+    
+    index.html 에 부착되기 전, index.js 에서는, css 파일을 적용시키는데, 
+
+    그 형태는 
+
+        import React from "react";
+        import ReactDOM from "react-dom/client";
+-       import "./index.css";
+        import App from "./App";
+
+
+-   [1. 첫번째 CSS 파일 적용시키는 방법 : css 파일을 불러와서 전체에 적용시키기]
+
+-       import "./MainNavigationBar.css";
+
+        function MainNavBar() {
+        return (
+            <header>
+-           <div className="logo">React Meetup</div>
+
+    ==> 모든 css 코드를 불러와, 평소처럼 적용시킨다.
+
+-   [2. 두번째 CSS 파일 적용시키는 방법 : css 파일의 "코드를 객체처럼 불러와", css 파일의 코드가, "각각의 프로퍼티로 만들어 적용"시키기]
+    *** 반드시 CSS의 파일명을 ".module.css" 라고 지어야한다.
+
+-       import classes from "./MainNavigationBar.module.css";
+
+        function MainNavBar() {
+        return (
+            <header>
+-           <div className={classes.logo}>React Meetup</div>
+
+    ==> 객체처럼 불러와 사용한다.
+    ==> 이 방법은, 각각의 css 코드를, scope(개별적으로) 적용시키는데 특화되어있다.
+
+11. 반복 배열문 만들기, "{[<li>item1</li>, <li>item2</li>, ...]}" 그리고, " .map() " => 무한증식 배열의 기초
+
+    1) react 에서, "배열을 렌더하는 방법"은
+        {} 안에, "배열형태의 태그"를 넣는것이다. => { [] }
+
+        function AllMeetupsPage() {
+            return (
+              <div>
+-               { [ <li>item1</li>, <li>item2</li> ] }
+              </div>
+            );
+          }
+
+    2) Array.map() 은, 
+        "배열의 모든 값에 접근"해, "콜백함수의 조건"으로 "모든 배열의 값을 조작"할 수 있는 내장메서이드이다.
+-       "배열을 return 한다."
+
+
+    3) 둘을 조합하면, 배열문을 만드는 원리가 나온다.
+
+    const meetupArray = [
+        {
+          id: 1,
+          name: "광화문",
+          image:"",
+          location: "",
+        },
+        {
+          id: 2,
+          name: "강남구청",
+          image: "",
+          location: "",
+        },
+        {
+          id: 3,
+          name: "판교역",
+          image:"",
+          location: "",
+        },
+      ];
+      
+    function AllMeetupsPage() {
+        return (
+          <div>
+            <div>AllMeetupsPage</div>
+-           {meetupArray.map((item) => {
+-             return <li key={item.id}>{item.name}</li>;
+-           })}
+          </div>
+        );
+      }
+
+    ==> "배열을 반환하는 map" 을 이용하여, 각각의 값으로
+       "react" 에서 {[ ]}  은 알아서 "배열을 렌더링" 하므로,
+       둘을 조합해서, { Array.map( ) } 에 "콜백함수로" <li> </li> 를 넣어주면, 반복배열문이 완성된다.
+
+   **** 모든 FRAME WORK(VUE, React 등...) 에서 "반복되는 리스트" 안에서는 반드시 "KEY" 를 요구한다.
+     " KEY는 유니크한 값"이여야하며, "대부분은 ID"이다.
+
+12. Component 에서 "List"와 "Items" 만들기
+    : 기본적으로, "Items"가 담긴 "component" 를 만들어(이 양식을 계속 사용할 것이기 때문에) 
+        "List"가 담긴 "Component" 를 만든 후에, "Items" 가 담긴 "component" 를 "반복 배열문으로 집어넣고"(11번 참조)
+      그 "List"를, "사용할 곳에 집어넣는다".
+
+      ==> 하나의 파일을 다른 파일에 import 할때마다, 동적인 값을 집어넣어,
+        우리는 양식(껍데기)만 만들고, 실제 사용할때마다 그 안에 동적으로 값을 집어넣는 형태가 된다.
+
+    [코드]====================================================================
+
+    <component - items>                 1. 껍데기를만든다
+      function Items(props){
+        return (
+            <li>
+                <image src={props.image} />
+                <h3> {props.title}</h3>
+                ...
+            </li>
+        )
+      }
+
+    <component - list>                  2. 하나의 껍데기를 이용하여, 외부에서 동적 값이 들어오면, 그걸로 리스트를 만들 준비를한다.
+      import Items from "./Items"               "meetuplist" => 외부에서 쓸 키, "image, title ..." => "Items component" 에 넣어줄 값들
+
+      function Lists(props){
+        {props.meetuplist.map((items) => (
+            <Items 
+            image={items.image}
+            title={items.title}
+            id={items.id}
+            key={items.id}
+            />
+        ))}
+      }
+
+    <App.js>                                   3. 배열값을 넣어준다. [이때, 배열의 객체의 키들은] 
+                                                    "List component" 안의 "map() 콜백함수에 사용"되므로 데이터의 키 이름을 잘 맞춰야한다.
+      import List from "../component/Items"
+
+      const datas = [
+        {id:1,
+        image:"https://...",
+        title:"타이틀1"},        
+        {id:2,
+        image:"https://...",
+        title:"타이틀2"},
+        ...  
+      ]
+      function App(){
+        <List meetuplist={datas}/>
+      }
+
+
+-   **  [둘의 차이점에 대하여]
+        1. Array.map( (xxx) => () ) 
+        2. Array.map( (xxx) => { return xxx...})
+
+        ==>
+            1.() 는" 알아서 return" 해주고, "줄바꿈"을 쓸 수 있고
+
+                Array.map( (xxx) => (
+                    xxx.item
+                    xxx.id
+                    ...
+                ))
+
+                * 대신 map() 이 끝날때까지 " ; " 을 쓰면 안된다. 중간에 끊겨버린다.
+
+            2. { return }  은 "줄바꿈을 쓸 수없고", 불편하다
+
+                Array.map( (xxx) => {
+                    return
+                    xxx.item
+                    xxx.id
+                    ...
+                })
+-                       불가능
+
+                Array.map( (xxx) => {
+                    return xxx.item}) 
+-                       가능
+
+-       ==>> 1번 방법 [() 있는것] 을 선호하도록 하자.
+
+
+13. div 가 아닌, [스타일을 설정한 Layout, Card ]를 통하여, Card 형식의 컨텐츠들을 통일시켜 관리하기 [**props.children]
+    : 일반적으로 div 를 사용하여, 컨텐츠를 랩핑한다.
+
+    "props.children"을 이용하여 같은 스타일의 card 를 만들어, 컨텐츠를 랩핑해보자.
+
+    ==> "동일한 card 형태로, UI 를 꾸밀 수 있게된다".
+
+    <Layout>    => NavBar 를 포함하는, App.js 전체를 감싸는 Layout
+
+        import classes from "./Layout.module.css";
+        import MainNavBar from "../layout/MainNavigationBar";
+        
+        function Layout(props) {
+        return (
+            <div className={classes.main}>
+            <MainNavBar />
+-           <main>{props.children}</main>
+            </div>
+        );
+        }    
+    
+    ** "Layout 안에는 NavBar 가 들어가는 것이 좋다." => 계속 감싸서 쓸것이기 때문에
+
+    <Card>  => NavBar 를 포함하지 않는, 모든 Card 형식을 가진 component에 사용할 컨텐츠를 감싸는 card
+
+        import classes from "./Card.module.css";
+        
+        function Layout(props) {
+        return (
+            <div className={classes.card}>
+-           {props.children}
+            </div>
+        );
+        }    
+
+
+    ** "props.children"에는, 여태 props로, elements 들을 하나씩 지정하여, 동적으로 넣은것과는 달리,
+        "모든 태그와 모든 것들이 전부" "children 안에 포함"되어 있기 때문에, "외부에서 동적으로 넣은 모든 태그"들이 들어간다.
+
+
+    <App.js>
+        import AllMeetupsPage from "./AllMeetupsPage"
+        import Layout from "./components/Layout"
+
+        function App(){
+-           <Layout>
+                <Route path="/" exact>
+                    <AllMeetupsPage/>
+                </Route>
+-           </Layout>
+        }
+
+        ==>> 다시말하자면, 모든 "JSX 구문의 태그"들은, "children 속성 안에 들어있다"는 말이다.
+    
+
+14. 기본적으로 React 에서 양식을 만들때는, [양식 전체를 감싸는 Card component]와 [그 안에 들어가는 form component] 를 만들어 사용한다.
+
+    [items] - [list] - [AllMeetup] page
+    
+    [Layout] - [NewMeetupForm] - [NewMeetup] page
+
+    => 반복되는 Card form => "Layout" 으로 반복시키고
+    => 반복되는 item or list 형식 => "items와 list component" 로 반복시키고
+    
+    또한," NewMeetup.js" 나, "AllMeetup.js" 의 주요 기능이, " 잘 보이도록 간결하게 " 유지하기 위해, component 를 사용하기도 한다.
+
+15. <input type="url"> [URL 을 담는 input type]
+
+16. 다시 말하는 Layout 의 장점
+
+    import classes from "./NewMeetupForm.module.css";
+    import Card from "../ui/Card";
+
+    function NewMeetupForm() {
+    return (
+-       <Card>
+        <form>
+            <div className={classes.control}>
+        ...
+-       </Card>
+
+    ==>> "Card 이라는 형식" 을 사용하여, 전체 폼을 지정해주었으므로,
+        같은 스타일의 통일된 방식을 가지고, 깔끔한 웹사이트를 만들 수 있다.
+
+        또한, "CSS를 다시 만질 필요도 없고, 변경하기도 쉽다."
+
+   
+17. 폼에 입력된 값 처리하기 - React 로, Form Data 받고, 처리하기 [ref , useRef]
+    
+    [방법]
+    1. 기본 form의 기능을 막아야한다. => 우리는 "자바스크립트" 로 "값을 전송할것이기 때문"에 양식을 "새로고침하는 기본 FORM 의 기능"을 막아야한다.
+                                            event.preventDefault
+    2. 이벤트 헨들러를 추가해야한다.   => onSubmit={}
+    3. 값을 어디선가 받아야한다.       => ref , useRef
+
+    import classes from "./NewMeetupForm.module.css";
+    import Card from "../ui/Card";
+    import { useRef } from "react";
+
+    function NewMeetupForm() {
+        const refTitle = useRef();
+        const refImage = useRef();
+        const refAddress = useRef();
+        const refDescription = useRef();
+
+        function submitForms(event) {
+            event.preventDefault();
+
+            const enteredTitle = refTitle.current.value;
+            const enteredImage = refImage.current.value;
+            const enteredAddress = refAddress.current.value;
+            const enteredDescription = refDescription.current.value;
+
+            const allDatas = {
+            title: enteredTitle,
+            image: enteredImage,
+            address: enteredAddress,
+            description: enteredDescription,
+            };
+            console.log(allDatas);
+        }
+
+        return (
+            <Card>
+            <form onSubmit={submitForms}>
+                <div className={classes.control}>
+                <label htmlFor="title"> Meetup Title </label>
+                <input type="text" id="title" required ref={refTitle} />
+                </div>
+                <div className={classes.control}>
+                <label htmlFor="image"> Meetup Image </label>
+                <input type="url" id="image" required ref={refImage} />
+                </div>
+                <div className={classes.control}>
+                <label htmlFor="address"> Meetup Address </label>
+                <input type="text" id="address" required ref={refAddress} />
+                </div>
+                <div className={classes.control}>
+                <label htmlFor="description"> Meetup Description </label>
+                <textarea id="description" ref={refDescription}></textarea>
+                </div>
+                <div>
+                <button className={classes.actions}> add meetup</button>
+                </div>
+            </form>
+            </Card>
+
+
+18. 폼에 입력된 값 처리하기 - DB 로 POST 하기 [자식(실제데이터있는)에서는 함수를 실행하고, [함수 실행문은 부모측에서 동적으로 넣어주기]] 
+    부제 : "자식이, 함수형 props" 를 "부모로부터 함수 실행문을 받아" "실행시키는 방법"
+
+    ==>> 자식 : (일단 함수를 실행시키며), "나이거 쓸거야. 실행문 줘"
+         부모 : 그래 여기있다.
+
+    <component>
+
+    function NewMeetupForm(props) {
+        const refTitle = useRef();
+        ...
+
+        function submitForms(event) {
+            event.preventDefault();
+        
+            const enteredTitle = refTitle.current.value;
+            ...
+        
+            const allDatas = {
+            title: enteredTitle,
+                ...
+            };
+        
+-           props.postToDatabase(allDatas);                 ==>> 나이거 사용할거야, 실행문은 어디?
+        }
+
+        ==>> postToDatabase(allDatas) 
+                파라미터에 "allDatas" 를 넣은 "postToDatabase" 라는 이름의 함수를 실행할건데,
+                   "props 로 인해, 외부에서 동적으로 접근이 가능"하다.
+
+    <NewMeetup.js>
+
+        import NewMeetupForm from "../components/meetups/NewMeetupForm";
+
+        function NewMeetupsPage() {
+-           function postDataHandler(meetupData) {                  ==>> 실행문 보내줄게
+                fetch("https://fir-project-fabc9-default-rtdb.firebaseio.com/meetup.json", {
+                    method: "POST",
+                    body: JSON.stringify(meetupData),
+                    headers: {
+                    "Content-Type": "application/json",
+                },
+-           }
+            return (
+                <section>
+                    <div>
+                        <h1> new Meetup</h1>
+                    </div>
+                    <div>
+-                       <NewMeetupForm postToDatabase={postDataHandler} />    ==>> 여기
+
+    ==> "자식의 내부에, 데이터가 있는 경우"에는, 
+        "부모에서 자식으로 데이터까지 넣어줄 필요가 없기 때문"에
+        "함수 실행문만 보내준것이다."
+
+    ==> 실행문(파라미터 포함) 그 자체를 보내주는 것이라 인지하면 편하다.
+        [함수이름 따로, 파라미터 따로] 가 [아니라] [파라미터를 포함한 함수 그 자체 를 보내주는 것이다.]
+
+19. POST 요청을 전달한 이후, 페이지를 빠져나오기 [ useHistory Hook ]
+
+-   import {useHistory} from "react-router-dom"
+
+    function NeewMeetupPage(){
+-       const history = useHistory();
+
+        function eventHandler(){
+            fetch (
+                ...
+-           ).then(()=>{
+-               history.replace("/");
+            })
+        }
+    }
+
+20. 페이지가 렌더될때마다, DB의 데이터를 가져오는 "Data Fetching" 하기 [useState, useEffect HOOK ]
+
+
+    1) 기본적인 fetch 와 response 받기
+        
+-       fetch 함수는, "자동으로 promise 를 반환"하고, "response" 를 받는다.
+-       또한, 받으려는 값을 json으로 바꾸는 ".json()" 도, "promise" 를 반환하기 때문에, "하나의 .then 을 더 추가하여, 실제 값"을 받는다.
+    
+        function AllMeetup(){
+            fetch(
+                "....URL"
+            )
+            .then(response => {
+                return response.json();      
+            }).then(data => {
+    
+            })
+
+            return(
+                <div>
+                    <p> ...</p>
+                </div>
+                ...
+            )
+        }
+
+-       한가지 문제는, fetch 한 데이터를 가져오는 동안, javascript는 값을 가져오기를 기다리지 않는다.
+        그렇다고, async, await 를 사용하게 되면, 
+        "반드시 동기적 이여야 하는 REACT 함수의 법칙" 때문에, 좋지 않은 결과가 나올것이다.(그래서 VUE 할때 평생 대기중이였던듯)
+
+-       그렇다면, 기다리는 동안, 표시할 화면을 나타내 주면 된다.
+        "화면에 표시하는 것을 바꿔주는 훅은?" ==>> 바로 "useState HOOK" 이었다.
+
+
+    2) 데이터를 가져오는 동안, 기다리지 않는 javascript 를 위하여, loading 만들기
+
+        import {useState} from "react"
+
+        function AllMeetup(){
+-           const [isLoading, setIsLoading] = useState(true)        ==>> 초기에는 데이터를 가져오는 중이므로 "true"
+
+            fetch(
+                "....URL"
+            )
+            .then(response => {
+                return response.json();      
+            }).then(data => {
+-               setIsLoading(false)                                ==>> 데이터를 전부 가져온 후, "false"
+            })
+
+-           if(isLoading){                                          ==>> 로딩중, 화면에 표시할 컨텐츠를 생성 
+                return (
+                    <section>
+                        <p> ...loading </p>
+                    </section>
+                )
+-           }
+            return(
+                <div>
+                    <p> ...</p>
+                </div>
+                ...
+            )
+        }
+
+    3) 실제 받아온 데이터를, "State" 에 저장하고, 사용...하려는데, "무한루프가 발생하므로, 무한루프를 잡고! [useEffect Hook]"
+
+-       * 무한루프의 이유
+            : "useState hook" 은, "상태변화가 생기면", "코드를 완전히 재시작한다"(다시 읽는다.)
+
+                그럼, [페이지렌더] - [ Data Get] - [setIsLoading(false) 상태변화] - [State에 의해 재시작] - [페이지 렌더]
+                    [Data get] - [setIsLoading(false) 상태변화] - [State에 의해 재시작]...
+                    
+                ... 무한루프에 빠진다.
+
+            ==>> 그래서 [useEffect Hook] 을 사용한다. "조건에 맞추어 함수를 실행하기 위하여".
+
+
+        import {useState, useEffect} from "react"
+
+        function AllMeetup(){
+            const [isLoading, setIsLoading] = useState(true)
+-           const [loadedMeetupData , setLoadedMeetupData] = useState([])   => 초기에는 빈 배열의 Data
+
+-           useEffect( () => {
+                fetch(
+                    "....URL"
+                )
+                .then(response => {
+                    return response.json();      
+                }).then(data => {
+                    setIsLoading(false)
+    -               setLoadedMeetupData(data)                       
+                })
+-           }, [] )                                 ** useEffect 의 사용조건을 확인하려면, "0.리액트"의 "useEffect Hook" 확인
+
+            if(isLoading){ 
+                return (
+                    <section>
+                        <p> ...loading </p>
+                    </section>
+                )}
+
+            return(
+                <div>
+-                   <MeetupList meetups={loadedMeetupData} / >
+                </div>
+                ...
+            )
+        }
+
+
+-   *) 추가사항 => fireBase 에서는, get 을 실행할때, 배열형태가 아니라, 
+        "객체 안"의 "객체", 로 가져오기 때문에 ," 배열로 강제로 만들어준다".
+
+-       사용기술:
+        ==>> 객체의 key 를 가져오는, for(const key in data)
+        ==>> 객체의 키와 값을, 추출하는 스프레드 연산자(...)
+        
+                        // fireBase에서, data로 가져오면, 이렇게 나온다  //
+
+                        {-NF7z8GTHXphWD7Fsd6-: {…}, -NF80XptqODrllkGTS8i: {…} }
+-                          {...} 안에는 {address : "..." , description : "...", ...} 처럼 실제 데이터가 들어있다.
+
+-       useEffect( () => {
+            fetch(
+                "....URL"
+            )
+            .then(response => {
+                return response.json();      
+            }).then(data => {
+                const meetupDatas = []
+
+                for(const key in data){
+                    const meetup = {
+                        id:key,                 ==>> 여기서 key = -NF7z8GTHXphWD7Fsd6-
+                        ...data[key]            ==>> 여기서 data.key = {…} 즉, 실제 데이터 객체가 들어있으므로, ... 을 통해 밖으로 빼낸다.
+                    }
+                    meetupDatas.push(meetup)
+                }
+                
+                setIsLoading(false)
+-               setLoadedMeetupData(data)                       
+            })
+-       }, [] )  
+
+    4) < 최종코드 > =======================================================================================
+
+        function AllMeetupsPage() {
+            const [isLoading, setIsLoading] = useState(true);
+            const [loadedMeetupDatas, setLoadedMeetupDatas] = useState([]);
+        
+            useEffect(() => {
+            fetch("https://fir-project-fabc9-default-rtdb.firebaseio.com/meetup.json")
+                .then((response) => {
+                return response.json();
+                })
+                .then((data) => {
+                const meetupDatas = [];
+        
+                for (const key in data) {
+                    const meetup = {
+                    id: key,
+                    ...data[key],
+                    };
+                    meetupDatas.push(meetup);
+                }
+        
+                setIsLoading(false);
+                setLoadedMeetupDatas(meetupDatas);
+                });
+            }, []);
+        
+            if (isLoading) {
+            return (
+                <section>
+                <p>isLoading...</p>
+                </section>
+            );
+            }
+        
+            return (
+            <div>
+                <div>AllMeetupsPage</div>
+                <div>
+                <MeetupList meetups={loadedMeetupDatas} />
+                </div>
+            </div>
+            );
+        }
+        
+        export default AllMeetupsPage;
+
+
+[extra. 헷갈릴 수 있는것 바로잡기]
+
+    1. fetch 를 할때, await 를 사용하여, 변수로 받을 수 없으므로,
+                fetch().then() 을 사용하여 값을 받는다.
+
+    2. fetch 이후, promise 를 받아, 처리완료되면 .then() 으로 처리한다.
+        "첫번째 .then()" 에서는, 받은 "response data 를, json 에서 자바스크립트 형식으로 변환 [ .json() ]"한다.
+
+        처리하는 시간이 걸리므로, ".json은 다시 promise 를 반환"하고,
+        처리가 완료되면, "두번째 .then()" 을 통하여, "실제로 처리된 data 값을 이용 가능하다."
+
+    3. 화면에 표시되는 return() 은, 여러개를 적어도 상관없다.
+
+    4. for ... in 반복문의 복습
+                
+        const object = {a: 1, b: 2, c: 3};
+
+        for (const key in object) {
+        console.log("key = obj[key]");
+        }
+        
+        // Output:
+        // "a = 1"
+        // "b = 2"
+        // "c = 3"
+
+
+DB 에서 GET으로 오는 값, 페이지가 렌더되면 자동으로 가져오게하기
+
+21. Context 다루기 [ store 폴더에서, 전역으로 사용가능한, component] , [createContext , useContext HOOK]
+
+    기본 :
+        
+        1. Context 가 담긴, "ContextProvider"를 "기본 React Component( 평소 쓰던것 )" 로 하여, 만든 후에,
+            "전역(모든 App)" 에 뿌리기 위하여, ContextProvider 안의 return에, 
+            "Context를 .provider" 매서드를 붙여, {props.children} 을 감싸게 한다. (준비과정)
+
+            ==> 이후 index.js 에 가서, (사용할것)이다.
+
+        2. Context 로 만든 함수도 Component 이기 때문에, 시작값은 대문자로 하는것이 맞다.
+
+-       3. "Context Component" 에서 값을 전달하려면, "context 변수(이름은 맘대로)" 안에 넣고, 자식들에게 "value" 로 값을 집어넣는다.
+
+-       4. Context 를 만드는 "createContext 파라미터 안"에는 "초기값" 이 들어간다.
+            
+    
+    사용 : 
+    
+-   1) 일단, 사용할 준비 [ createContext , store 폴더]
+        
+        import { createContext, useState } from "react";
+
+        const FavoriteContext = createContext({
+            favorite: [],
+            totalFavorite: 0,
+            addFavorite: (favoriteMeetup) => {},
+            deleteFavorite: (meetupId) => {},
+            itemIsFavorite: (meetupId) => {},
+        });
+        // Context 의 초기조건에, 함수를 집어넣음으로써, IDE(자동완성기능) 에 도움을 줄 수있음 (능력은 없음)
+        
+        export function FavoriteContextProvider(props) {
+            const [favorite, setFavorite] = useState([]);
+            
+            function addFavorite(favoriteMeetup) {
+                setFavorite((previousFavorite) => {
+                return previousFavorite.concat(favoriteMeetup);
+                });
+            }
+            
+            function deleteFavorite(meetupId) {
+                setFavorite((previousFavorite) => {
+                return previousFavorite.filter((meetup) => {
+                    return meetup.id !== meetupId;
+                });
+                });
+            }
+            
+            function itemIsFavorite(meetupId) {
+                return favorite.some((meetup) => meetup.id === meetupId);
+            }
+            
+            // 실질적인, 전역변수 context
+            const context = {
+                favorite: favorite,
+                totalFavorite: favorite.length,
+                addFavorite: addFavorite,
+                deleteFavorite: deleteFavorite,
+                itemIsFavorite: itemIsFavorite,
+            };
+            
+        // context를 내보냄으로써, context변수 안에있는 것들을 쓸 수 있는것.
+            return (
+                <FavoriteContext.Provider value={context}>
+                {props.children}
+                </FavoriteContext.Provider>
+            );
+        }
+        
+        export default FavoriteContext;
+        
+        // 최종 결과물(내보낼 값) 은  export default FavoriteContext; 로 내보내고,
+        // 그 안에 들어가 사용할 함수 는 함수 이름 앞에 export를 붙여 export function FavoriteContextProvider(props) {... 로 내보낸다.
+    
+
+-   사용처 [1] : AllMeetsup 페이지의, favorite 을 더하는 버튼에 사용하기 위함
+
+            모든 라우트에 거쳐, 모든 App 에서 사용할 것이므로,
+            <index.js> 에 가서," import 한 후에 전부 묶어준다."
+
+            "{props.children}" 으로 감싼 것은," FavoriteContextProvider 함수 안의 return"이므로,
+            Context 값인 FavoriteContext 가 아닌, "FavoriteContextProvider 함수만 따로 import" 하여, 감싸준다.
+
+        
+        
+-       1. <index.js> 에서, 모든 App 이, Context와 상호작용 할 수 있게 만듬
+
+            import { FavoriteContextProvider } from "./components/store/favorite-context";
+
+            const root = ReactDOM.createRoot(document.getElementById("root"));
+            root.render(
+            <FavoriteContextProvider>
+                <BrowserRouter>
+                <App />
+                </BrowserRouter>
+            </FavoriteContextProvider>
+            );
+         
+        2. "AllMeetsup 페이지"의, component 는, "MeetupItem component" 에서 오기 때문에 거기로 가서,
+
+            import { useContext } from "react";                             // 1. "context를 사용하기위한 hook" Import
+
+            import classes from "./MeetupItem.module.css";
+            import FavoriteContext from "../store/favorite-context";        // 2. "hook 에 넣을 context" Import
+
+            function MeetupItem(props) {
+            const favoriteContext = useContext(FavoriteContext);            // 3. "useContext hook 을 사용"하여, "context 에 접근"
+
+            const itemIsFavorite = favoriteContext.itemIsFavorite(props.id);    // 4. 함수 짠대로 사용
+
+            function toggleFavoriteStatusHandler() {
+                if (itemIsFavorite) {
+                favoriteContext.deleteFavorite(props.id);
+                } else {
+                favoriteContext.addFavorite({
+                    id: props.id,
+                    title: props.title,
+                    image: props.image,
+                    description: props.description,
+                    address: props.address,
+                });
+                }
+            }
+            return (
+                <li className={classes.item}>
+                <div className={classes.image}>
+                    <img src={props.image} alt={props.title} />
+                </div>
+                <div className={classes.content}>
+                    <h3> {props.title} </h3>
+                    <address> {props.address}</address>
+                    <p> {props.description}</p>
+                </div>
+                <div className={classes.actions}>
+                    <button onClick={toggleFavoriteStatusHandler}>
+                    {itemIsFavorite ? "delete Favorite" : "To Favorite"}
+                    </button>
+                </div>
+                </li>
+            );
+            }
+
+            export default MeetupItem;
+
+
+-   사용처 [2] : Favorite 페이지에, Favorite 아이템들을 표시하기 위함.
+
+-           import { useContext } from "react";                                         // 1. "context를 사용하기위한 hook" Import
+
+            import MeetupList from "../components/meetups/MeetupList";
+-           import FavoriteContext from "../components/store/favorite-context";         // 2. "hook 에 넣을 context" Import
+
+            function FavoritePage() {
+-           const favoriteContext = useContext(FavoriteContext);                        // 3. "useContext hook 을 사용"하여, "context 에 접근"
+
+            let content;
+            if (favoriteContext.totalFavorite === 0) {
+-               content = <h3> you have no favorite Yet</h3>;
+            } else {
+-               content = <MeetupList meetups={favoriteContext.favorite} />;            // 4. "favoriteContext.favorite" 를 통하여, "favorite에 넣은 값에 접근"
+                                                                                            추가적으로, content 라는 헬퍼변수를 만들어,
+            }                                                                               조건에 따라, favorite이 없으면, 다른 화면을 출력하게함
+            return (
+                <section>
+                <h1> MY Favorite </h1>
+-               {content}
+                </section>
+            );
+        }
+
+        export default FavoritePage;
+
+
+-   사용처 [3] : Favorite 헤더에, favorite 몇개 들어갔는지, 뱃지 형태의 숫자를 추가하기 위함
+
+        import { Link } from "react-router-dom";
+-       import { useContext } from "react";
+
+        import classes from "./MainNavigationBar.module.css";
+-       import FavoriteContext from "../store/favorite-context";
+
+        function MainNavBar() {
+-       const favoriteContext = useContext(FavoriteContext);
+        return (
+            <header className={classes.header}>
+            <div className={classes.logo}>React Meetup</div>
+            <nav>
+                <ul>
+                <li>
+                    <Link to={"/"}> All meet ups</Link>
+                </li>
+                <li>
+                    <Link to={"/Favorite"}> Favorite</Link>
+                </li>
+                <li>
+                    <Link to="/NewMeetup">
+-                   new meet ups {favoriteContext.totalFavorite}
+                    </Link>
+                </li>
+                </ul>
+            </nav>
+            </header>
+        );
+        }
+
+        export default MainNavBar;
+
+
+
+==> 추가적으로, DB에 저장해야만, 영구적인 데이터가 남는다. 
+    현재까지는, Meetsup 데이터들만, DB(Firebase)에 저장했지만, 
+    필요하다면, Favorite 들도, DB에 저장하여보자
+
+        
+        
+    

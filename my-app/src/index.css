@@ -1,0 +1,35 @@
+.card {
+  border: 1px solid;
+  padding: 2rem;
+}
+.btn-section {
+  margin: 0 auto;
+}
+
+.back-drop {
+  z-index: 5;
+  position: fixed;
+  background-color: rgba(84, 84, 84, 0.69);
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+.Modal {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background-color: white;
+  padding: 1rem;
+  text-align: center;
+
+  width: 30rem;
+
+  z-index: 10;
+  position: fixed;
+  top: 20vh;
+  left: calc(50% - 15rem);
+}
+
+.Modal button {
+  margin: 0 2rem;
+}

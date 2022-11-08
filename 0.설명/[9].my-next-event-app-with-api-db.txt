@@ -1,0 +1,675 @@
+[여기에서는]
+
+    최종적으로, "DB"와 "API" 와 "NEXT.JS" 를 "전부 사용"하는 앱을 만든다.
+
+1. 기본 signup 추가 [ 일단, 사인업할 이메일 보내면, 받아서 데이터만 돌려받기로]
+
+    <component - input - signup > : "사인업에 사용할 이메일을 보냄"
+
+        import styles from "./event-signup.module.css";
+        import { useRef } from "react";
+        
+        function ResisterEmail() {
+        const emailRef = useRef();
+        
+        function resisterEmail(event) {
+            event.preventDefault();
+        
+-           const enteredEmail = emailRef.current.value;                      ** "주의사항 1번"
+        
+            const reqBody = {
+            email: enteredEmail,
+            };
+        
+            fetch("/api/signup", {
+            method: "POST",
+            body: JSON.stringify(reqBody),
+            headers: {
+                "Content-Type": "application/json",
+            },
+            })
+            .then((res) => res.json())
+            .then((data) => {
+                console.log(data.feedback);
+            });
+        }
+        return (
+            <div className={styles.maindiv}>
+            <form>
+                <h2> sign up stay UPDATE!</h2>
+                <input type="email" placeholder="Your email" ref={emailRef} />
+                <button onClick={resisterEmail}>Resister</button>
+            </form>
+            </div>
+        );
+        }
+        
+        export default ResisterEmail;
+
+    < API - signup> : "이메일을 받으면, 값을 돌려줌 (아직 저장 X)"
+
+        function getSignup(req, res) {
+            if (req.method === "POST") {
+            const signupEmail = req.body.email;
+        
+            if (!signupEmail || !signupEmail.includes("@")) {
+                res.status(422).json({ message: "invalid email" });
+                return;
+            }
+            res.json({ message: "signup complete", feedback: signupEmail });
+            }
+        }
+        
+        export default getSignup;
+      
+
+-   [추가사항] 
+        "받은 req의 validation 작성"
+
+-   [ 주의사항 ]
+        1. 프론트에서 요청할때, useRef 를 사용했다면, useRef 를 사용하여 저장한 변수는
+            "반드시 버튼을 눌렀을때 활성화 되는 함수 안에서"
+            "변형시켜야 한다"
+
+            ==> 함수 바깥에 정의하면, 첫째로, useRef 의 초기값이 없으므로, 변형에 실패해 오류가 나고,
+                버튼을 눌렀을때, useRef 안으로 들어간 값이 뽑혀야 하는데,
+                함수 안에 두지 않고, 전역변수인 바깥에 두면 없는 값이 API 로 전달 될 수 있다.
+                    (마치 bind 에서 this 를 고정시키는 이유를 설명하는 것 처럼)
+
+        2. 서버측 코드(API)에서는 반드시, "validation 을 작성"하여, 이상한 값이 요청되는 것을 막자
+
+        3. 서버측 코드에서 "res.status()" 로, status 코드를 전송해주도록 하자
+        
+
+2. 디테일 페이지 창에, 기본 코멘트창 추가, 클라이언트사이드 validation 추가
+        
+        : 추후, API 요청을 통해, DB에, 각 "디테일 페이지마다"의 "코멘트들"로 저장 ==> "동적 API 로, 디테일페이지의 id 필요"
+
+    ============ <component - input - commentform > ========================================================================
+
+    : "보내는 양식 및 api 로 넘기는 함수"
+-   : "props 로, eventid" 를 받아와서, "동적인 API 경로" 를 만들어 요청
+
+        import styles from "./comment-form.module.css";
+        import { useRef } from "react";
+            
+        function CommentForm(props) {
+-           const [invalid, setInVaild] = useState(false);                         // 클라이언트 사이드 validation을 위한 State
+            const eventId = props.eventId;
+            
+            const emailRef = useRef();
+            const nameRef = useRef();
+            const commentRef = useRef();
+            
+            function resistComment(event) {
+                event.preventDefault();
+            
+                const postData = {
+                email: emailRef.current.value,
+                name: nameRef.current.value,
+                comment: commentRef.current.value,
+                };
+
+    -           if (!postData.email || postData.email.includes("@") || ...) {       // 클라이언트 사이드 validation
+
+    -               setInVaild(true);
+
+                } else {
+                    fetch(`/api/comment/${eventId}`, {
+                    method: "POST",
+                    body: JSON.stringify(postData),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    })
+                    .then((res) => res.json())
+                    .then((data) => {
+                        console.log(data);
+                    });
+                    setInVaild(false);
+                }
+            }
+            return (
+                <form className={styles.mainGrid}>
+                    <div className={styles.formGrid}>
+                        <div>
+                            <label htmlFor="inputEmail"> Your Email</label>
+                            <input type="email" id="inputEmail" ref={emailRef} />
+                        </div>
+                        <div>
+                            <label htmlFor="inputName"> Your Name</label>
+                            <input type="text" id="inputName" ref={nameRef} />
+                        </div>
+                    </div>
+                    <div className={styles.comment}>
+                        <label htmlFor="inputComment"> Your Comment</label>
+                        <textarea id="inputComment" rows={5} ref={commentRef}></textarea>
+                    </div>
+    -               <div>{invalid ? "invalid form" : ""}</div>              // 클라이언트 사이드 validation의 결과
+                    <div>
+                        <button onClick={resistComment}> 등록 </button>
+                    </div>
+                </form>
+            );
+            }
+        
+        export default CommentForm;
+        
+    ==== <Pages - event - [eventid].js > ========================================================================
+
+        : "component 인, commentform 에", "동적인 eventid 값을 넘기며 가져오는 페이지"
+
+        import { findEvent } from "../../helper/api-util";
+            ...
+
+        import CommentResister from "../../components/input/comment-resister";
+
+        function EventDetailPage(props) {
+            const {eventById,eventId} = props;
+
+            if (!eventById) {
+                return <p> no Event Found!</p>;
+            }
+            return (
+                <Fragment>
+                    ...
+                    <div>
+-                       <CommentResister eventId={eventId}/>
+                    </div>
+                </Fragment>
+            );
+            }
+            export default EventDetailPage;
+
+            export async function getStaticProps(context) {
+                const { params } = context;
+
+                ...
+
+            };
+  
+
+        export async function getStaticPaths() {
+            const allEvents = await getFeatureEvent();
+
+            const prePath = allEvents.map((event) => ({ params: { eventid: event.id } }));
+
+            return {
+                paths: prePath,
+                fallback: true,
+            };
+
+    ==== <API - comment - [eventid].js > ========================================================================\
+
+        : "서버측 코드를 사용"하는 "동적 API"
+        : 동적인 값으로, URL을 받으면,"req.method"로 요청의 종류를 파악하고,  "req.query.동적파일이름" 과 "req.body" 로 값을 받아와,
+            적절한 값을 필터한 후, "동적으로 응답"하는, 동적 API
+
+        : 
+
+        function resistComment(req, res) {
+            if (req.method == "POST") {
+                const eventId = req.query.eventid;
+
+                const { email, name, comment } = req.body;
+
+                if (
+                !email.includes("@") ||
+                !email ||
+                name.trim() == "" ||
+                !name ||
+                !comment
+                ) {
+                res.status(422).json({ message: "invalid input" });
+                return;
+                }
+
+                console.log(email, name, comment);
+                res.status(201).json({ message: "added comment" });
+            }
+
+            if (req.method == "GET") {
+                const dummyList = [
+                { id: "c1", name: "ms", comment: "first text" },
+                { id: "c2", name: "js", comment: "second text" },
+                ];
+                res.status(200).json({ comment: dummyList });
+            }
+            }
+
+        export default resistComment;
+
+-   [추가사항] 
+        "클라이언트 사이드 validation"을 통해서, 유저들에게도 무엇이 잘못되었는지 인식시킴
+        : {삼항식 혹은 , && 식} 을 이용하여, if문 작성하여, 보여주는 것을 만듬
+
+3. 댓글창을 열었다 닫았다 할때마다, 새로운 데이터가 fetch 되어, 보이게 만들기
+
+    : "comment form" 과 "list"가 뭉쳐있는 "comment resister" 에서, "API로 데이터를 받아, list에 넘겨주면", list가 값을 받아 사용
+
+    : 받아오는 시기는, "comment 창을 열어야 보이므로", "comment 창의 열림(State) 가 바뀔때마다 => useEffect 사용"
+
+    <component - CommentResister>
+
+        import styles from "./comment-resister.module.css";
+        import { useEffect, useState } from "react";
+
+        import Comments from "./comment-list";
+        import CommentForm from "./comment-form";
+
+        function CommentResister(props) {
+            const eventId = props.eventId;
+
+            const [showComment, setShowComment] = useState(false);
+            const [comments, setComments] = useState([]);
+
+-           useEffect(() => {
+                fetch(`/api/comment/${eventId}`)
+                .then((res) => res.json())
+                .then((data) => {
+                    setComments(data.comment);
+                });
+-           }, [showComment]);
+
+            function toggleComments() {
+                setShowComment((prevStatus) => !prevStatus);
+            }
+
+            return (
+                <div className={styles.center}>
+                <button onClick={toggleComments}>{showComment ? "Hide" : "SHOW"}</button>
+                <div>
+                    {showComment && <CommentForm eventId={eventId} />}
+-                   {showComment && <Comments comments={comments} />}
+                </div>
+                </div>
+            );
+        }
+
+        export default CommentResister;
+
+
+    <component - Commentlist>
+
+        import styles from "./comment-list.module.css";
+
+        function Comments(props) {
+            return (
+                <ul className={styles.ul}>
+                    {props.comments.map((comment) => (
+                        <li key={comment.name}>
+                        <p className={styles.comment}>{comment.comment}</p>
+                        <p className={styles.name}> By.{comment.name}</p>
+                        <hr />
+                        </li>
+                    ))}
+                </ul>
+            );
+            }
+
+        export default Comments;
+
+
+4. DB 연결하기 WITH MONGODB CLOUD
+    
+    1. mongodb Atlas : 클러스터 생성
+    2. npm install mongodb : mongodb 와 커넥트 할, 타사패키지 설치
+
+-   [주의사항]
+
+        1. 절대 클라이언트 사이드 에서는 MONGODB 를 연결하지 말것 [외부에 전부 공개된다] 특히, credential code가 노출됨
+            ex) 페이지 내의 컴포넌트함수, 컴포넌트 파일, 등등... 에서 사용 금지
+
+            ==> 서버측 코드 [ getStaticProps, getServerSideProps, api] 에만 사용
+
+-   3. Atlas 사용법과 해석 
+
+        1. Atlas 의 "Cluster" 는,  DataBase Name 과 동일한 말이다.
+        2. Database Access 탭에서, 누가 들어올 수 설정할 수 있다,
+        3. Network Access 탭에서, 어느 IP 가 들어 올 수 있는지 설정 할 수 있다.
+
+            * 일단 0.0.0.0/0 로 모든 사람이 접속 가능하게 했지만,
+                현 컴퓨터의 IP 주소를 넣는 것이 좋다.
+                배포를 한다면, 배포한 IP 주소도 넣어야 한다.
+ㅡ
+        4. Connect 하는 주소는, 클러스터에 접속해, connect 버튼을 누른 후, MonogoDB Driver 을 눌러서 나오는 "접속주소"로 연결한다.
+        5. "접속 주소"가 이렇게된다면
+
+            mongodb+srv://audtlr:<password>@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority
+            
+            audtlr : 유저이름
+            <password> : Access 의 패스워드 입력
+            newletter : Cluster 이름
+
+            ** "?retryWrites=true&w=majority" 앞에 <db이름> 을 입력하면, 자동으로, "그 db를 생성후 연결해준다."
+
+            ex) mongodb+srv://audtlr:<password>@newletter.hrll7bz.mongodb.net/newletter?retryWrites=true&w=majority
+
+        6. "db" 는 "클러스터 안에 있는(하위 항목 중), 가장 큰 덩어리 중 하나이고" 
+            "collection" 은 "db" 안에 있는, 테이블이다.
+
+            [클러스터] - [db] - [collection] - [data] 순으로 정렬된다.
+
+                * 이벤트 APP 이라면,
+                    "DB"에 "Event" 를 넣고,
+                    "collection" 에 여러 하위항목들 [COMMNET, NEWLTETTER, USERDB, ... ]
+                    를 넣으면 되겠다.
+
+    
+-   4. MONGODB 와 API 를 연결
+
+        https://www.npmjs.com/package/mongodb 참조 ****
+
+        < API - singup.js >
+    -       : 콜백함수로 .then() 을 사용해도 되지만, 역시 서버측 코드에서 편한건, "await 사용하기!"
+
+
+    -       [방법1. await , 사용한 정석]
+
+                import { MongoClient } from "mongodb";
+
+                async function getSignup(req, res) {
+
+                    if (req.method === "POST") {
+
+                            ...
+                        const client = new MongoClient(
+                            "mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority");
+
+                        await client.connect();
+                        const db = client.db("events");
+                        const collection = db.collection("newletter");
+
+                        const insertResult = await collection.insertOne({ name: "ms" });
+                        
+                            ...
+
+                        res.json({ message: "signup complete", feedback: signupEmail });
+                        
+-                       client.close()
+                    }
+                }
+                export default getSignup;
+
+    -       [방법2. await , 사용하고, connect, collection 까지 뭉쳐버리기] **** 제일 편한듯
+
+                const client = await MongoClient.connect(
+                    "mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority"
+                );
+        
+                const db = client.db("newletter");
+                const insertResult = await db.collection("email").insertOne({ name: "rs" });
+
+-               client.close()
+
+            [방법3. 콜백함수 사용하기] : 눈으로만 대충 봐두자 어차피 안쓴다.
+
+                MongoClient.connect("mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority"
+                ).then(client => {
+                    const db = client.db("newletter")
+
+                    db.collection("email").insertOne({name:"ms"})
+                }).then(...)
+
+-               client.close()
+
+        [주의사항]
+    -       : 모든 API 로직이 끝나면 반드시, "client.close()" 로, connect 를 종료하는 것을 잊지 말자
+                * 모든로직이라 함은, api의 function 이 끝나는 지점이다.
+
+
+5. Comment를 DB에 저장하기
+    : 어떤 event 인지, eventId 를 같이 동봉한, commnet에 대한 정보를 DB에 저장한다.
+
+    < API - comment - [event].js >
+        import { MongoClient } from "mongodb";
+
+        async function resistComment(req, res) {
+
+            const eventId = req.query.eventid;
+
+            const client = await MongoClient.connect(
+            "mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority"
+            );
+
+            if (req.method == "POST") {
+
+                const { email, name, comment } = req.body;
+
+                if (
+                !email.includes("@") ||
+                !email ||
+                name.trim() == "" ||
+                !name ||
+                !comment
+                ) {
+                res.status(422).json({ message: "invalid input" });
+                return;
+                }
+
+
+                const newComments = {
+                    email,
+                    name,
+                    comment,
+                    eventId,
+                }
+
+    -           const insertResult = client.db("events").collection("comments").insertOne(newComments);
+
+                const newComments.id = insertResult.insertedId
+
+                res.status(201).json({ message: "added comment" });
+        }
+
+-   [새로안 사실]
+        1. "insertOne" 을 할때, "객체의 키" 만 입력해도, "키와 밸류가 동시에 들어간다"...!!!
+
+        2.  "insertOne" 의 retrun 값은,
+                {
+                    "acknowledged" : true,
+                    "insertedId" : ObjectId("56fc40f9d735c28df206d078")
+                }
+            이렇다
+
+    **  3. "insertOne" 으로, 객체변수를 DB 에 집어넣으면!
+            "객체변수 안"에 "자동으로"  "_id 값"으로, "DB에 저장된 id 값"이 들어가버린다!
+
+6. Comment 가져오기 (.sort() 를 이용한 데이터 정렬)
+
+        import { MongoClient } from "mongodb";
+
+        async function resistComment(req, res) {
+
+            const eventId = req.query.eventid;
+
+            const client = await MongoClient.connect(
+            "mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority"
+            );
+            
+            if (req.method == "POST") {
+                const { email, name, comment } = req.body;
+                    ...
+                    
+
+-           if (req.method == "GET") {
+                const getResult = await client
+                .db("events")
+                .collection("comments")
+                .find()
+                .sort({_id:-1})
+                .toArray();
+
+                res.status(200).json({ comment: getResult });
+            }
+            }
+-           client.close();
+
+        export default resistComment;
+
+    ** Array.sort({정렬조건: -1 or 1}) ==> 정렬 조건대로 정방향, 역방향으로 정렬됌
+
+    
+7. 다시 복습하는 MONGODB CRUD
+
+    # find({}), findOne({})
+    
+    # 전부 가져오기
+    .find({}).toArray()
+    
+    #조건에 맞는 데이터만 가져오기
+    .find({rating: {$gt:4}})
+    .find({ name: "ms"})
+    
+    # 특정 데이터만 가져오기
+    .find( {} , {name:1, "address.street" : 1})
+    .find( {} , {name:1, "address.street" : 0})
+    
+    [표시하고 싶은 값만  [키:1] 을 사용하면 나머지는 자동으로 0 로 변하여, 표시되지 않는다.]
+    [뺄 값만 [키:0] 을 사용하면 그 키 값만을 제외한 전부가 표시된다.]
+    
+    # UPDATE  = .updateOne({},{$set:{ }})
+    .updateOne({_id:ObjectId("630f039fc75c67a63e8479ea")}, { $set: {name:"pizzaHouse"}})
+    
+    # Delete = .deleteOne({}) , .deleteMany({})
+    .deleteOne({ _id:ObjectId("630f039fc75c67a63e8479ea")})
+    
+8. 에러 핸들링하기 + API 페이지 내에, HELPER 함수를 이용하여, 깔끔하게 코드정리하기
+    
+    1. "페이지 내의 HELPER 함수를 통해, db 연결을, 한다." ========================================
+    
+    ================================================================================
+    < API - singup Api >
+    
+    import { MongoClient } from "mongodb";
+    
+    -       async function connectDb() {
+        const client = await MongoClient.connect(
+            "mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority"
+        );
+        return client;
+    }
+    
+    -       async function insertData(client, data) {
+        const insertResult = await client
+        .db("events")
+        .collection("newletter")
+        .insertOne(data);
+        
+        return insertResult;
+    }
+    
+    async function getSignup(req, res) {
+        if (req.method === "POST") {
+            const signupEmail = req.body.email;
+            
+            if (!signupEmail || !signupEmail.includes("@")) {
+                res.status(422).json({ message: "invalid email" });
+                return;
+            }
+            
+            -               const client = await connectDb();
+            -               const insertResult = await insertData(client, { email: signupEmail });
+            
+            res.json({ message: "signup complete", feedback: signupEmail });
+            
+            client.close();
+        }
+    }
+    
+    export default getSignup;
+    
+    
+    
+    2. "async await" 니까, "try, catch" 로 "에러 핸들링 을 한다." ========================================
+
+    : 잊지 말아야 하는 점은" try 블록 안"에서는, "try 블록 안에 있는 것들만 적용"된다는점!
+    -           ==> client 를 밖으로 빼서, "전역변수" 로 만들어주어, 2개의 try 블록 안에서 전부 사용 가능하게 만들자
+    
+    ==> 만약 "client 를 밖으로 빼서 쓰지 않으면", "client.close()" 를 사용할 수 없을것이다.
+    
+    ================================================================================   
+    ...
+    
+    -           let client;
+    
+    try {
+        -               client = await connectDb();
+    } catch (error) {
+        res.status(500).json({ message: "connect fail" });
+        return;
+    }
+    
+    try {
+        const insertResult = await insertData(client, { email: signupEmail });
+        res.status(201).json({ message: "signup complete", feedback: signupEmail });
+    } catch (error) {
+        res.status(500).json({ message: "signup fail" });
+        
+    }
+    
+    -           client.close();
+    
+    export default getSignup;
+    
+    ** client.close() 가, 오류가 나는 상황에서도 되게하기 위하여, catch 블럭에서도 return 을 하지 않는다.
+    ** connectDB 하는 상황에서,
+
+9. API 를 helper 폴더에, db-util.js 파일을 만들어서, 코드를 리팩토링(아웃소싱) 하기
+    
+    < API HELPER 함수 (helper - api-util.js) : 조건에 맞는 것들을 전부 가져오기 find({조건}) > 
+    
+        import { MongoClient } from "mongodb";
+    
+-      export async function connectDb() {
+            const client = await MongoClient.connect(
+                "mongodb+srv://audtlr:HYbC2pH0ODGcW7D9@newletter.hrll7bz.mongodb.net/?retryWrites=true&w=majority"
+            );
+            return client;
+        }
+            
+-       export async function getFindAllDb(client, collection, sort, filter = {}) {
+            const findResult = await client
+                .db("events")
+                .collection(collection)
+                .find(filter)
+                .sort(sort)
+                .toArray();
+                
+            return findResult;
+        }
+    
+-       *** 초기조건을 위해, filter = {} 를 사용했다 
+        *** 반드시, "client.close()" 를 사용하기 위해, "ConnectDB" 와, "CRUD 동작"의 "함수를 나누어서 만들어야 한다"는 것을 명심
+    
+    < API 내에서, HELPER 함수 사용 >
+    
+-       import { connectDb, getFindAllDb } from "../../../helper/db-util";
+                    ...
+    
+        async function resistComment(req, res) {
+            const eventId = req.query.eventid;
+                  
+-           const client = await connectDb();
+                    ...
+            if (req.method == "GET") {
+    
+-               const helperGetResult = await getFindAllDb(client,"comments",{ _id: -1 },{ eventId: eventId });
+                
+                res.status(200).json({ comment: helperGetResult });
+            }
+    
+-           client.close();
+    
+        export default resistComment;
+    
+10. 깔끔한 에러 핸들링을 위해, "{항상 DB-util 파일에, DB 를 아웃소싱}"하고, {TRY,catch 를 실행"}하도록 하자 ****
+    
+
+11. MonogoDB 관련 코드들이, 매우 자주 실행되는 애플리케이션을 구축할 때에는(사람들이 많이 이용하는 댓글달기? 쯤?)
+    client.close() 를 하지 않고, connect 상태를 유지하도록 한다.
+
+    ==> client.close() 를 다 빼버리라는 의미
+    
+    
+    

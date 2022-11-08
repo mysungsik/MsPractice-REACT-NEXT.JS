@@ -1,0 +1,724 @@
+1. 시작준비 
+2. 사전구성
+3. 폴더구성 시작
+4. 더미 데이터 가져오기 ***
+5. 이미지 파일등 static 파일들 가져오기 ***
+6. [일반 component 를 만들어서], 붙여넣기 ***
+7. 일단 가볍게, 이름, 아이디 만 해서, [더미 데이터로부터, 리스트 만들기]
+8. "객체로 오는 props"에서, "객체 데이터"를 "각각 변수로 추출하여, 사용하기" *****
+9. 구조를 만들었으니, 이제[ 완벽한 더미데이터로 만든 리스트 카드]를 만들고, [CSS 까지 작업]
+10. global CSS 파일은, pages 폴더의 _app.js 에서만 import 가 가능하다
+11. UI 만들기 [compnents 보다 더 작은 단위의 module] // [Link 에 클래스 추가하기], [버튼 UI 만들기]
+12. 아이콘 넣어보기
+13. 불러온 아이콘에, 스타일 넣어보기
+14. ".find()" 로, 알맞은 데이터를 "데이터 페칭"하여( 아직은, DB가 아닌, DUMMY_DATA로), 디테일 페이지 만들기
+15. <Fragment> </Fragment> 를 사용하여, [제일 바깥 테두리 <div> 없애서, 다른 파일에 주기]
+16. [useRouter 사용하여, 값을 가져올때], useRouter 로 데이터 가져오는 것보다,return 이 더 빨리 일어나서, [데이터가 화면으로 불러와지지 않는 오류]
+17. [파일로 만든 Icon]을, import 하여 사용하거나, [부모로부터 받아서 자식에서 사용하기]
+18. [한 페이지를, 여러개의 compnent 들을 사용하여 꾸미기 최종] - 대부분 대충 이런 인덱스를 가짐
+19. [전체 페이지에 똑같이 들어가야 하는 header 같은것들의 작업] => _app.js [ 메인 루트 파일 ]
+20. [...xx].js 를 활용하여, [필터가 된 항목들을 보이게 하기!] ["FORM 사용 및 제출", "프로그래밍 적 페이지 이동방법"]
+21. [ "데이터 전송 함수 FORM" 실행] - [ 실행 함수는 event "PAGE" 에서 "component" 로 넘기고 ] - [데이터와 함수의 실행은 "compnent" 에서]
+
+===============================================================================================================
+1. 시작준비 
+    nodejs 준비
+    nextjs 준비
+
+2. 사전구성
+    
+    1. 라우터구성
+        1) "/"                  => 스타팅 페이지
+        2) "/event"             => 모든 이벤트 페이지
+        3) "/event/[eventid]"   => 모든 이벤트 페이지의 디테일 페이지 및 예약 
+        4) "/event/[...data]"   => ...data 파일 혹은 폴더에, ... 로 값을 받아, "특정 기간 으로 필터된 이벤트 페이지들"
+
+
+3. 폴더구성 시작
+
+    pages // [event] // index.js            ==> 모든 이벤트
+                     // [eventid].js        ==> 이벤트 디테일
+                     // [...date].js        ==> 날짜별 이벤트
+
+    ==> /event/xxx              :   [eventid].js 가 선택됌 (1개의 동적값)
+    ==> /event/xxx/yyy/zzz...   :   [...date].js 가 선택됌 (2개 이상의 동적값)
+
+4. 더미 데이터 가져오기 ***
+
+-   : 데이터를 가져올때는, "내가 무엇을 가져오는지 잘 보아야한다."
+
+    <DUMMY_Data.js>
+
+        const DUMMY_EVENTS = [
+            {
+            id: "e1",
+                ...
+
+            isFeatured: true,
+            },
+        ];
+        
+        export function getFeaturedEvents() {
+            return DUMMY_EVENTS.filter((event) => event.isFeatured);
+        }
+            ...
+
+        export function getEventById(id) {
+            return DUMMY_EVENTS.find((event) => event.id === id);
+        }
+      
+    <index.js>
+-       : 가져올때는 [DUMMY_Data.js] 에서 [export한 함수 그 자체를 가져와야한다] ******
+
+        import {getFeaturedEvents} from "../DUMMY_Data"
+        import {getEventById} from "../DUMMY_Data"
+
+-       : 사용할때는 이제, 일반 적으로 사용하던 것 처럼 사용하면 된다.
+
+        const featureEvent = getFeaturedEvents()
+        const EventById = getEventById() 
+        ...
+        
+        
+5. 이미지 파일등 static 파일들 가져오기 ***
+
+    : "이미지 파일" 등의 외부에 공개되어야 하는 "Static File" 들은,
+-       반드시, public 폴더 안에 들어가야한다!
+
+    * "public 폴더, 그 안의 폴더", 도 상관 없고, 하여튼 무조건 "public 폴더 안" 에 Static 으로 쓸 파일들을 위치시켜야한다.
+    
+    그래야 "Next.js" 는, "그 파일들을 외부에 공개"한다.
+
+
+6. [일반 component 를 만들어서], 붙여넣기 ***
+    
+    : 모든 앱을 만들때는 "조각 조각 나뉜 블럭"처럼 "compnents" 들을 구성한 이후에, 끼워맞추는 형식으로 만들도록 노력해야한다.
+
+        * Items ==> Lists   ==>  AllEvents  page
+                            ==>  EventsQuery page
+                                ...
+
+        처럼, "반복되는 components" 들은, 결국 큰 화면인 page를 구성하는데 여러번 쓰이기 때문에,
+
+        코드가 깔끔해지고, 관리가 쉬워지며, 구조적인 틀을 갖출 수 있다.
+
+-      * 주의사항 : 일반 component 들은 반드시, 따로 폴더를 만들어서 해야한다.
+-                   pages 폴더 같은데 넣으면 절대 안된다! 라우터가 만들어진다! 물론 public 에도 안되고 다 안된다. "새 폴더를 반드시 만들어서해라"
+
+7. 일단 가볍게, 이름, 아이디 만 해서, [더미 데이터로부터, 리스트 만들기]
+
+-   ** 작업순서
+        1. 메인파일인 "index.js" 에 어디에 넣을지 정해서 위치 잡아두고 [데이터를 어떤것을 보내야 할지 생각한다.]
+        2. "list.js" 에서,"ul 만들어두고, props.컴포넌트이름.map( () => () ) " 까지 만들어두고
+        3. "items.js" 에서, 실제로 들어갈 <li></li> 작업해서 넣어주고 [데이터를 어떤것을 받을지 잘 생각한다.]
+
+        4. export 는 전부 필수고, "각각 필요한 곳에 import" 하기
+
+        ** props 의 사용, 데이터가 들어가는 관계 (부모 -> 자식) 을 잘 생각하면 간단하게 가능하다.
+
+
+    == < compnents / event / event-items.js >==============================
+
+        function EventItems(props) {
+            return (
+            <li>
+                <p> {props.id} </p>
+                <p> {props.title} </p>
+            </li>
+            );
+        }
+        export default EventItems;
+      
+
+    == < compnents / event / event-list.js >==============================
+
+        import EventItems from "../../components/events/event-items";
+
+        function EventList(props) {
+        return (
+            <section>
+            <ul>
+                {props.eventdatas.map((data) => (<EventItems 
+                key = {data.id}
+                id ={data.id}
+                title = {data.title}
+                />))}
+            </ul>
+            </section>
+        );
+        }
+        export default EventList;
+    
+
+
+    == <pages / index.js > =============================================
+
+-       import { getAllEvents } from "../Dummy_data";
+-       import EventList from "../components/events/event-list";
+
+        function HomePage() {
+-       const allEvents = getAllEvents();
+
+        return (
+            <div>
+                <h1> Home Page </h1>
+-               <EventList eventdatas={allEvents} />
+            </div>
+        );
+        }
+        export default HomePage;
+
+
+
+8. "객체로 오는 props"에서, "객체 데이터"를 "각각 변수로 추출하여, 사용하기" *****
+
+
+  == [일반적인 list-items 의 경우]  ============================================================
+
+    function EventItems(props) {
+    return (
+        <li className={styles.li}>
+            <img src={props.image} alt="imageName" className={styles.image} />
+            <h2> {props.title}</h2>
+            <time> {props.date} </time>
+            <address> {props.location} </address>
+                ...
+            <div>
+                <Link href="/"> Explore Events</Link>
+            </div>
+    
+    "부모로 부터 올 곳에 props를 붙여, 데이터를 받을 준비를 한다."
+
+-   ==> 파일이 커지면, "어떤 데이터를 받는지 모르고", 더군다나 "데이터의 이름들이 복잡" 해진다.
+
+    ==>> 받을 데이터를, "객체 상태"에서, "미리 각각 변수로 뽑아"! "사용하도록하자"
+
+
+  == [객체에서 각각 변수로 뽑아서 사용하는 경우]  ============================================================ 
+
+    function EventItems(props) {
+-       const {image , title, date, location} = props
+
+-       const newDate = new Date(date).toLocaleDateString("ko-KR");
+-       const newLocation = location.replace(",", "\n");
+-       const exploreLink = `/event/${id}`;
+
+        return (
+            <li className={styles.li}>
+                <img src={image} alt="imageName" className={styles.image} />
+                <h2> {title}</h2>
+                <time> {newDate} </time>
+                <address> {newLocation} </address>
+                    ...
+                <div>
+                    <Link href={exploreLink}> Explore Events</Link>
+                </div>
+
+    장점 :  1. 간단한 변수 정리
+            2. 가독성 매우 증가
+            3. 무엇을 받아왔는지 확실히 알 수 있음
+            4. 가져온 값들을, 한군데 정리해서, 재가공 하여 집어넣을 수 있음
+
+    ==> javascript 는, "없는 객체의 키" 에 값을 집어넣으면 , "알아서 그 키를 만들어 집어넣는다"
+
+        "item 안에 props 라는 객체"에, 
+        부모로부터  
+
+            id={data.id}
+            title={data.title}
+            image={data.image}
+            ...
+
+        이러한 값들을 받으면,
+
+        "LIST 의 자식 컴포넌트인 ITEMS 의 props 에서는" 알아서 "객체 키를 만들어 저장"하고,
+            그 "객체 키"를  "미리 변수로 뽑아서 사용하는 원리"이다.
+
+-   ==>> 이렇게 사용하면, 훨씬 좋은 가독성과, 어떤 값을 받았고, 어디에 집어넣었는지 더욱 확실하게 알 수 있다.
+
+
+9. 구조를 만들었으니, 이제[ 완벽한 더미데이터로 만든 리스트 카드]를 만들고, [CSS 까지 작업]
+
+10. global CSS 파일은, pages 폴더의 _app.js 에서만 import 가 가능하다
+
+11. UI 만들기 [compnents 보다 더 작은 단위의 module] // [Link 에 클래스 추가하기], [버튼 UI 만들기]
+    : UI 라 하면, Card 하나, 혹은 Button 하나 처럼, 
+        매우 작은 단위의 지정된 compnent 들을 말한다.
+-   버튼 UI 를 만들어, 이곳저곳에 붙여넣는다.
+
+    <compnent - UI - Button>
+
+        import Link from "next/link";
+        import styles from "./button.module.css";
+
+        function ButtonLink(props) {
+        return (
+            <Link href={props.link} className={styles.button}>
+                {props.children}
+            </Link>
+        );
+        }
+        export default ButtonLink;
+
+12. 아이콘 넣어보기
+
+    https://heroicons.com/ 에서 아이콘 주워온다음,
+
+    1. JSX 파일로 복사하고,
+    2. 정리하기 좋게, "component - icon 폴더 - xxxIcon.js" 로 만들어서,
+    3. function, return 으로 만들어서, 사용할 곳에 import
+
+13. 불러온 아이콘에, 스타일 넣어보기
+    : 불러온 아이콘에 <span> </span> 으로 감싸서, 클래스를 넣어준다.
+
+    <span className={styles.icon}>
+        <ArrowRightIcon />
+    </span>
+
+
+14. ".find()" 로, 알맞은 데이터를 "데이터 페칭"하여( 아직은, DB가 아닌, DUMMY_DATA로), 디테일 페이지 만들기
+            
+    export function getEventById(id) {
+        return DUMMY_EVENTS.find((data) => data.id === id);
+    }
+
+15. <Fragment> </Fragment> 를 사용하여, [제일 바깥 테두리 <div> 없애서, 다른 파일에 주기]
+
+-       import {Fragment} form "react"
+     
+    :react는 모든 태그를 감싼 가장 바깥 태그가 없다면, HTML 태그를 만들 수 없다.
+
+        만약, compnent에 
+
+        <div>
+            <td> 1 </td>
+            <td> 2 </td>
+        <div>
+
+        처럼 만든다면,
+
+        부모요소로 넘겼을때,
+
+        <tr>
+            <div>
+                <td> 1 </td>
+                <td> 2 </td>
+            <div>
+        </tr>
+
+        처럼 넘어오기 때문에, "형식에 맞지 않을 수 있다."
+
+-       ==> <Fragment> 태그로 감싸서, "부모요소로 넘길때, 최종 바깥 태그를 없애고 넘기면 된다."
+
+        compnent를
+        
+-           import {Fragment} form "react"
+
+-           <Fragment>
+                <td> 1 </td>
+                <td> 2 </td>
+-           </Fragment>
+    
+        이렇게 만든다면, 부모요소에서 받을때
+
+            <tr>
+                <td> 1 </td>
+                <td> 2 </td>
+            </tr>
+
+        이렇게 받아진다.
+
+16. [useRouter 사용하여, 값을 가져올때], useRouter 로 데이터 가져오는 것보다,return 이 더 빨리 일어나서, [데이터가 화면으로 불러와지지 않는 오류]
+
+        import { useRouter } from "next/router";
+
+        const eventdata = useRouter();
+        const data = eventdata.query
+
+        return (
+            <div>
+                <h1> {data.title} </h1>
+            </div>
+        );
+        }
+        export default DateFilter;
+
+-   ==>> 페이지를 로드할때, "eventdate.query" 이것보다 "return에 로드되는게 더 빨라서" "eventdate.query 가 없다고나옴"
+
+    - 해결 :
+-       불러올때, [if 체크로, "값이 없으면, 넣을 리턴값"을 넣어주면된다.]
+
+        import { useRouter } from "next/router";
+
+        const eventdata = useRouter();
+        const data = eventdata.query
+
+-       if(!data){
+            return(
+                <div>
+                    <p> You have no Date! </p>
+                </div>
+            )
+-       }    
+
+        return (
+            <div>
+                <h1> {data.title} </h1>
+            </div>
+        );
+        }
+        export default DateFilter;
+
+    ==>>" 불러오는 동안, 값이 없으므로","잠깐동안 혹은 정말 없다면 계속 떠있을 코드"를 넣어준것이다.
+
+17. [파일로 만든 Icon]을, import 하여 사용하거나, [부모로부터 받아서 자식에서 사용하기]
+
+    <compnent- icon - xxicon.js>
+
+        1. icon.js 파일에, 
+         2. 불러온 아이콘의 JSX 코드를 붙여넣고,
+        3. function 형태로 만들어,
+        4. export 한다.
+
+        <일반적인 경우 Icon 사용>
+
+            1. import 하고
+            2. <DateIcon /> 
+                    처럼 사용한다
+
+        <부모에서 자식으로 넘겨 사용>
+
+            [부모]
+
+                import LogisticsItem from './logistics-item';
+-               import AddressIcon from '../icons/address-icon';
+                
+                function xxx(){
+                    return(
+-                       <LogisticsItem icon={AddressIcon}>
+                            <address> ... </address>
+-                       </LogisticsItem>
+                    )
+                }
+
+            [자식]
+
+                import classes from "./logistics-item.module.css";
+
+                function LogisticsItem(props) {
+                return (
+                    <li className={classes.item}>
+                        <span className={classes.icon}>
+-                           <props.icon />
+                        </span>
+                        <span className={classes.content}>
+-                           {props.children}
+                        </span>
+                    </li>
+                );
+                }
+
+                export default LogisticsItem;
+
+-      ** 더 정확하게 사용하기 위해서는 [ 불러오는 파일들은 전부 "첫 글자가 대문자" 이여야 하므로]
+
+                function(){
+-                   const {icon : Icon } = props
+
+                    return(
+                        ...
+-                       <Icon />
+                    )
+                }
+
+18. [한 페이지를, 여러개의 compnent 들을 사용하여 꾸미기 최종] - 대부분 대충 이런 인덱스를 가짐
+-   : 가장 상위 페이지
+
+        import { useRouter } from "next/router";
+        import { getEventById } from "../../Dummy_data";
+
+        import EventLogistics from "../../components/event-detail/event-logistics";
+        import EventSummary from "../../components/event-detail/event-summary";
+        import EventContent from "../../components/event-detail/event-content";
+
+        import { Fragment } from "react";
+
+        function EventDetailPage() {
+        const eventid = useRouter();
+        const inputid = eventid.query.eventid;
+        const eventById = getEventById(inputid);
+
+        if (!eventById) {
+            return <p> no Event Found!</p>;
+        }
+        return (
+            <Fragment>
+                <EventSummary title={eventById.title} />
+                <EventLogistics
+                    date={eventById.date}
+                    address={eventById.location}
+                    image={eventById.image}
+                    imageAlt={eventById.title}
+                />
+                <EventContent>
+                    <p> {eventById.description}</p>
+                </EventContent>
+            </Fragment>
+        );
+        }
+        export default EventDetailPage;
+
+-   [주의깊게 볼점]
+        1. Fragment 의 사용 [혹시나 모를 div 때문에 생기는 오류 방지]
+        2. useRouter 로 값을 불러올때, [반드시, 값이 없을경우를 나타내는 if 체크를 넣어줄것]
+
+
+19. [전체 페이지에 똑같이 들어가야 하는 header 같은것들의 작업] => _app.js [ 메인 루트 파일 ]
+
+    1. "compnent" 에 "layout 폴더"를 만들어서,
+            "layout.js"
+            "header.js"
+        를 만들고
+
+        "layout.js" 에는 
+            칸을 만들어주고
+        "header.js" 에는
+            헤더를 만들어주어, "layout.js" 에 넣고
+
+        "layout.js" 를 통해, [루트 파일인 _app.js] 의 컨텐츠를 감싸준다.
+
+
+    ======<header.js>===========================================================================================
+
+        import Link from "next/link";
+        import styles from "./header.module.css";
+        
+        function HeaderComponent() {
+        return (
+            <header className={styles.header}>
+                <div className={styles.logo}>
+                    <Link href={"/"}> Logo</Link>
+                </div>
+                <nav className={styles.navigation}>
+                    <ul>
+                    <li>
+                        <Link href={"/"}> AllEvent</Link>
+                    </li>
+                    </ul>
+                </nav>
+            </header>
+        );
+        }
+        export default HeaderComponent;
+
+    ======<layout.js>===========================================================================================
+
+        import { Fragment } from "react";
+        import HeaderComponent from "./header";
+
+        function Layout(props) {
+        return (
+-           <Fragment>
+-               <HeaderComponent />
+                <main>{props.children}</main>
+-           </Fragment>
+        );
+        }
+        export default Layout;
+
+
+    ======<_app.js>===========================================================================================
+
+-       import Layout from "../components/layout/layout";
+        import "../styles/globals.css";
+
+        function MyApp({ Component, pageProps }) {
+        return (
+-           <Layout>
+                <Component {...pageProps} />
+-           </Layout>
+           );
+        }
+
+        export default MyApp;
+
+
+20. [...xx].js 를 활용하여, [필터가 된 항목들을 보이게 하기!] ["FORM 사용 및 제출", "프로그래밍 적 페이지 이동방법"]
+
+    1. "componets 폴더 안에",  "검색 폼"을 만든다
+
+    2. 이때, <Button> </Button>  의 태그는  
+        기존에, Link 로 만든 Button 이었기 때문에, 그냥 쓸 수 있도록 수정해준다.
+
+        <ui - button >
+            
+            import Link from "next/link";
+            import styles from "./button.module.css";
+
+            function ButtonLink(props) {
+    -           if (props.link) {
+                    return (
+                    <Link href={props.link} className={styles.button}>
+                        {props.children}
+                    </Link>
+                    );
+-               } else {
+                    return (
+-                   <button className={styles.button} onClick={props.onClick}>
+                        {props.children}
+                    </button>
+                    );
+                }
+                }
+            export default ButtonLink;
+
+    ==> props.link 가 없을 경우에는 "일반버튼" 처럼 사용 할 수 있도록
+           " onClick 이벤트 안에 props.onClick 을 달아",
+            "부모에서 onClick={} 라고 함수를 쓰면, click 이벤트를 사용" 할 수 있도록 만듬
+
+    
+21. [ "데이터 전송 함수 FORM" 실행] - [ 실행 함수는 event "PAGE" 에서 "component" 로 넘기고 ] - [데이터와 함수의 실행은 "compnent" 에서]
+
+    왜? eventSearch Component 에서 해결해도 되는데,
+    왜 대체, event Page 까지 와서, 함수를 넘기는 것일까?
+
+    <프로세스>
+        1.  "넘길 데이터" (year, month) 는, "component" 에 있다.
+        2.  그러므로, 실질적인 실행은 "component" 에서 진행된다.
+        3.  다만, "component" 에서는 "submitHandler 함수 안에서"
+            [...xxx].js 라는 URL로 이동하기 위한 함수 "props.onSearch(year,month)" 라는 "실행문만 두고"
+
+        4. "Page" 에서, "실제로 URL 을 이동시키는 함수문을 넘겨준다."
+
+            왜지
+
+-       ==>> 아마도," PAGE 의 기능"에 초점을 맞추기 위함이 아닌가 싶다.
+        ==> "최종적으로 필요한 기능을 끝자락" 에는, PAGE에서 넣어주도록 [ PAGE가 어떤 역할을 하는지 정확히 파악하기 위해 ]
+        
+    <프로그래밍적 프로세스>
+        "버튼 실행"
+        => "실행함수" 자식(search component)에게 전달
+        => component 안의 함수 실행
+        => "부모에서 보내준 함수"의 "파라미터"에는 "자식인 component안에 있는 값"들이 argumnet 로 들어감
+
+    == <EventSearch component> ======================================================================
+
+        function EventsSearch(props) {
+            const yearRef = useRef();
+            const monthRef = useRef();
+        
+-       function submitHandler(event) {
+            event.preventDefault();
+        
+            const selectedYear = yearRef.current.value;
+            const selectedMonth = monthRef.current.value;
+        
+-           props.onSearch(selectedYear, selectedMonth);
+            }
+            ...
+            
+    == <Search Page> ======================================================================
+
+        function Search Page(){
+-           const router = useRouter()
+
+-           function searchHandler(year,month){
+                const fullPath = `/event/${year}/${month}`
+                router.push(fullPath)
+            }
+
+-           <EventSearch onSearch={searchHandler}/>
+        }
+
+22. new Date() 에서, .getFullYear() 와 getMonth() 를 활용해서, "데이터" 에서 "날짜값을 뽑아" , "필터를 거쳐", "필요한 값만 가져오기"
+
+
+-   *** useRouter 를 통해, query 값을 가져올때,
+-       반드시 값이 없으면 if(!data){ ... } 라는 값을 달아서 사용할것!!
+            첫 렌더시에 없으므로, 에러난다!!
+        
+        
+-   1. Dummy_data.js 안에 있는, Filter 함수 [ 반환값은, 필터된 데이터 ] 해석
+        ==> 문법 잘 보자 ( return 형식 )
+
+        export function getFilteredEvents(dateFilter) {
+            const { year, month } = dateFilter;
+        
+-           let filteredEvents = DUMMY_EVENTS.filter((event) => {
+                const eventDate = new Date(event.date);
+                return (
+-                   eventDate.getFullYear() === year && eventDate.getMonth() === month - 1
+                );
+-           });
+        
+            return filteredEvents;
+        }
+
+    2. query 값을 validtion 및, 숫자로 변환 등... 기타작업
+
+    3. List 를 불러와서, 칸으로 만들어줌
+
+    ==== <최종 [...date].js> ==================================================================================================
+
+        import { useRouter } from "next/router";
+        import { getFilteredEvents } from "../../Dummy_data";
+        import EventList from "../../components/events/event-list";
+
+        function DateFilter() {
+            const eventdate = useRouter();
+            const dateFilter = eventdate.query.date;
+
+            // useRouter 써서 가져올땐, 반드시, "없을때 조건이 필수" // 렌더 초기에는 값이 없으므로 오류
+            if (!dateFilter) {
+                return <p> Loading...</p>;
+            }
+
+            const [inputYear, inputMonth] = dateFilter;
+
+            const NumInputYear = +inputYear;
+            const NumInputMonth = +inputMonth;
+
+            // 넣은 값이 이상할 경우 validation
+            if (
+                isNaN(NumInputYear) ||
+                isNaN(NumInputMonth) ||
+                NumInputYear == "" ||
+                NumInputMonth == "" ||
+                NumInputYear > 2030 ||
+                NumInputYear < 2010 ||
+                NumInputMonth < 1 ||
+                NumInputMonth > 12
+            ) {
+                return <p> Invalid Filter</p>;
+            }
+
+            // 넣은 값이 멀쩡하면, 값을 가져옴
+            const filteredEvents = getFilteredEvents({
+                year: NumInputYear,
+                month: NumInputMonth,
+            });
+
+            console.log(filteredEvents);
+
+            return (
+                <div>
+                <EventList eventdatas={filteredEvents} />
+                </div>
+            );
+            }
+        export default DateFilter;
+
+    ==================================================================================================
+
+    ** item 안에서, "상대경로" 로 지정하지 않아서, "이미지가 보이지 않는 문제를" 해결했다.
+
+        <event-LogisticsItem>
+
+        return (
+            <li className={styles.item}>
+    -               <img src={"/" + image} alt="imageName" className={styles.img} />
+                <div>
+
+            ...
+
+    

@@ -1,0 +1,119 @@
+0. 간단한 fireBase Db의 시작 (아주 간단한 클라우드 DB) -GOOGLE
+
+    1. fireBase
+        : 데이터베이스 서버로, 여러가지 기능들이 들었다.
+
+        https://firebase.google.com/?hl=ko&gclid=CjwKCAjwzNOaBhAcEiwAD7Tb6KKOomS3V3sEXftK226rxZelWeD8GaM2URG89leLHsIEnxb1xZwMChoCV2sQAvD_BwE&gclsrc=aw.ds
+
+        
+    2. 간단한 실행
+
+        [접속후], [시작하기를] 눌러 ,[새 프로젝트를] 만들고
+
+        [좌측 사이드바] 에서, [빌드] - [Realtime Database] 를 들어가, [Test mode]의 데이터베이스를 만든다.
+
+    3. fireBase URL 에 요청을 보낼때에는, URL.json  이라는 확장자를 붙여야한다.
+
+        일반적      : http://ms.com
+        fireBase    : http://ms.com.json
+
+1. 오버레이 div 센터 맞추기
+
+  width: 30rem;
+  z-index: 10;                ==> "z-index" 의 값을 주어서, "화면 최상단으로 끌고올라오기"
+  position: fixed;
+  top: 20vh;                  ==> 위로부터, "absoulte 위치"에서, 20vh
+  left: calc(50% - 15rem);    ==> div 크기가 30rem 이므로, 반짤라서, 50% - 15rem [꼭지점 기준이기 때문에 이렇게]
+
+2. 누르면 숨겨졌다 나타나는 버튼 만들기 [ "useState" // "삼항식 if문" // "callback 으로 useState 사용하기"]
+
+    1. useState : 상태를 나타내는 [화면이 바뀌는] Hook
+
+    2. 컴포넌트 함수 { } 안에는 if 문을 쓸 수 없으니, "사용가능하게 삼항식 if문"으로 "혹은 && if 문"
+
+    3. callback 함수로 setState 를 사용해야, 바로바로 적용된다.
+
+    4. callback 함수로 "setState() 안의 값을 바꿀때"," 파라미터"는 자동적으로 "그냥 State" 즉, "이전 State" 가 된다.
+
+    <코드>
+        import styles from "./comment-resister.module.css";
+        import { useState } from "react";
+
+        import Comments from "./comment-list";
+        import CommentForm from "./comment-form";
+
+        function CommentResister() {
+        const [showComment, setShowComment] = useState(false);
+
+        function toggleComments() {
+            setShowComment((prevStatus) => !prevStatus);
+        }
+
+        const dummy = [{ comment: "hi", name: "ms" }];
+        return (
+            <div>
+-           <button onClick={toggleComments}>{showComment ? "Hide" : "SHOW"}</button>
+            <div>
+-               {showComment && <CommentForm />}
+-               {showComment && <Comments comments={dummy} />}
+            </div>
+            </div>
+        );
+        }
+
+        export default CommentResister;
+
+3. insertOne 에 관한 사실 3가지
+
+    1. "insertOne" 을 할때, "객체의 키" 만 입력해도, "키와 밸류가 동시에 들어간다"...!!!
+
+    2.  "insertOne" 의 retrun 값은,
+                {
+                    "acknowledged" : true,
+                    "insertedId" : ObjectId("56fc40f9d735c28df206d078")
+                }
+            이렇다
+
+**  3. "insertOne" 으로, 객체변수를 DB 에 집어넣으면!
+            "객체변수 안"에 "자동으로"  "_id 값"으로, "DB에 저장된 id 값"이 들어가버린다!
+            
+4. 배열 정렬시키기
+
+    let queryData = req.query.order;
+    let orderLaw = "right"
+
+    if(queryData === "right"){
+        orderLaw = "left"
+    }
+
+    storedRestaurants.sort(function(resA,resB){
+        if(orderLaw === "right" && resA.name > resB.name){
+            return 1
+        }
+        else if(orderLaw === "left" && resB.name > resA.name){
+            return 1
+        }
+        return -1
+    });
+
+
+5. 배열 간단하게 정렬시키기( Array.sort() )
+
+
+           if (req.method == "GET") {
+                const getResult = await client
+                .db("events")
+                .collection("comments")
+                .find()
+-               .sort({_id:-1})
+                .toArray();
+
+                res.status(200).json({ comment: getResult });
+            }
+
+        export default resistComment;
+
+-   ** Array.sort({정렬조건: -1 or 1}) ==> 정렬 조건대로 정방향, 역방향으로 정렬됌
+
+
+

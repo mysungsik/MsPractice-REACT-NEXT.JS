@@ -1,0 +1,94 @@
+<용어>=======================================================================================================================
+
+1. root component 
+    : 가장 기반이 되는 component 로, "App.js" 를 뜻한다.
+
+2. component
+    : "단위적으로 쪼개져있는, 코드들의 집합"으로, 블럭처럼 만들어서, 필요한대 끼워넣는 느낌. 
+        "코드의 중복을 방지"하고, 깔끔한 리팩토링이 되게 만든다.
+
+        "서버사이드" 로 따지면 "util" 정도가 되겠다.
+
+3. Modal
+    : "팝업창" 정도로 생각하면 되겠다.
+
+4. BackDrop
+    : "팝업창" 이 열리는동안," 뒤의화면을 차단"하는 역할일 한다.
+
+5. react component 함수
+    : component 의 머리부분이 되는 함수
+
+6. react hook
+    :" 함수형 component"가 "class component 의 기능을 사용하게 해주는" 기능
+
+    => class component 로만 관리 가능하던, 생명주기를, 함수형 component 안에서도 관리가 가능하게 해주어,
+        상태관리를 아주 쉽게 할 수 있다.
+
+    => hook 을 사용하면, "브라우저에 메모리를 할당" => "함수형 컴포넌트가, 기존에 가지고 있던" "[상태(state)]" 를 기억할 수 있게 해준다.
+-     ⇒ 쉽게 말해서 "함수 내에 써져 있는 코드 및 변수를 기억"할 수 있게 됐다 라는 의미
+
+    참고자료 : https://velog.io/@goyou123/React-Hooks-%EC%B4%9D%EC%A0%95%EB%A6%AC
+    
+
+
+<이론>=======================================================================================================================
+
+0. react 는 순수한 자바스크립트 파일이다. HTML 코드를 "JSX" 포맷으로 쓸 뿐.
+    : class의 경우도 "자바스크립트처럼" "className" 이라는 것으로 "클래스를 추가하는 것처럼"
+
+1. 남긴 3개의 파일중 가장 먼저 실행되는 파일은, 
+    "index.js"  파일이다.
+
+2. "index.js"에 되어있는 수많은 "import xx from xx"는
+    "package.json" 에, 개발종속성으로 설치되어 있는 것들을 불러오는것이다.
+
+3. 기본 index.js 설명
+
+    <index.js>
+        import React from "react";                                          ==> 개발종속성 패키지에서 불러오는것
+        import ReactDOM from "react-dom/client";
+        import "./index.css";
+        import App from "./App";                                            ==> "다른 파일"에서 불러오는것. import "불러올이름" from "위치"
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));  ==> "root" 여기에다가 , 붙일거다.
+        root.render(<App />);                                               ==> "import한 App 파일을"
+
+        ==> "root"의 위치는 "index.html 에 있고, 그래서 SPA 이다."
+
+
+4. 기본 프로세스 (REACT COMPONENT 가 작동하는 방식)
+
+    components "수많은 componet의 코드들" => componets-page "한 page를 구현하는 componets들의 모임" =>
+
+        => App.js "page들의 모임" => index.js "메인 코드의 import 위치" => index.html "실제 구현 SPA"
+
+5. React에서 COMPONENT 는 그저  retrun 되는 "함수"일 뿐이다.
+6.  component 에서 이름으로 사용하는 "함수이름" 의 시작은 대문자여야 한다.
+
+7. REST API 를 이용할때, "데이터베이스"를 REACT 에 연결하는 이유
+    : 결국 REACT 도 JavaScript 이기때문에, 유저들이 코드를 자유롭게 볼 수 있다.
+
+8. 화면은 왜 깜빡이면서 로딩이되는가
+    : 클라이언트 측에서, JavaScript 코드가 실행 된 후에, 데이터페칭이 시작 되므로,
+        요청된 페이지에, 아직 데이터가 전송되지 않아서 
+
+<준비단계>=======================================================================================================================
+
+1. node js 설치
+
+2. npx create-react-app 만들폴더이름 
+    ttps://create-react-app.dev/docs/getting-started
+
+3. prettier 설치
+    설정 - format 가면, prettier 설정
+
+4. 설정
+    1. test파일 지우고, 
+        "App.js", "index.css", "index.js" 만 남긴다
+    2. index.js 에서
+        <React.StrictMode> 코드제거
+        import reportWebVitals from './reportWebVitals'; 코드제거
+
+5. 강의를 위해, react-router-dom@5 의 버젼으로 설치할것.
+
+    npm install --save react-router-dom@5

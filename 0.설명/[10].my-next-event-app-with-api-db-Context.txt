@@ -1,0 +1,414 @@
+0. Context 는 언제 사용되는가?
+
+    : 세션과 같이, "앱의 모든 곳에서, 컨트롤이 가능하게 만드는, 코드"
+
+    "Context A" 가 있을때,
+
+        "component a", "component b", "component c" ... 등, "모든 컴포넌트 및 페이지"에서
+        Context A 에 접근해, context A 를 사용하고, 저장하고, 변경할 수 있다.
+
+    "Conetext A" 는 "객체 형태의 데이터"이며, "함수도 당연히 사용가능"하다. 
+
+0. 현 App 에서, Context 를 사용하는 목적
+
+    : "모든 화면에 표시되며," API 요청이 "정상 전달", "전달중", "실패" 로 나타나게 만드는, "작은 FOOTER" 를 만드는 것.
+
+1. [createContext from "react"] =====================================================================================================
+    : "context 를 만든다."  웬만하면, "store 폴더"에 저장하여, 분리시킨다.
+
+    1) createContext 를 하여, [초기 데이터 껍데기 변수] 를 만들고, export 한다.
+
+            import { createContext } from "react";
+
+            const NotificationContext = createContext({
+                notificationState: {},
+                showNotification: function () {},
+                hideNotification: function () {},
+            });
+            
+            export default NotificationContext;
+
+-       ==> 이 변수 "NotificationContext" 는, "전역으로 퍼질 context의 껍데기 이다"
+            "context 의 껍데기"는 단순히, 사용할 때, "자동완성"을 위해 넣는것이다. [사전 정의도 포함]
+
+    2) "NotificationContext 를, 전역으로 퍼뜨릴 도구", "NotificationContextProvider" 함수를 만들고, export 한다.
+
+            import { createContext } from "react";
+
+            const NotificationContext = createContext({
+                notificationState: {},
+                showNotification: function () {},
+                hideNotification: function () {},
+            });
+            
+-           export function NotificationContextProvider(props) {
+                return (
+                    <NotificationContext.Provider value={context}>
+                        {props.children}
+                    </NotificationContext.Provider>
+                );
+-           }
+            
+            export default NotificationContext;
+
+-       ==> NotificationContext 를, provider 를 사용하여, "하위 컴포넌트에 전달시킨다."
+        * provider : "정의한 context"를, "하위 컴포넌트"에게 전달하는 역할을 하는 코드
+        "NotificationContextProvider 로 감싸진, 항목들"은, "createContext 로 만든 NotificationContext" 를, "전부 받을 수 있다".
+        
+
+    3) "NotificationContextProvider" 에서 [초기 데이터 껍데기 변수] 만 생성된 "NotificationContext" 에, 
+        "실제로 사용될 context 값을 생성"하고, "하위 컴포넌트"에 전달한다.
+    
+            import { createContext, useState } from "react";
+
+            const NotificationContext = createContext({
+                notificationState: {},
+                showNotification: function (notificationData) {},
+                hideNotification: function () {},
+            });
+
+            export function NotificationContextProvider(props) {
+-               const [activeNotification, setActiveNotification] = useState();
+
+-               function showNotificationHandler(notificationData) {
+                    setActiveNotification(notificationData);
+                }
+-               function hideNotificationHandler() {
+                    setActiveNotification(null);
+                }
+
+-               const context = {
+                    notificationState: activeNotification,
+                    showNotification: showNotificationHandler,
+                    hideNotification: hideNotificationHandler,
+                };
+
+                return (
+                    <NotificationContext.Provider value={context}>
+                        {props.children}
+                    </NotificationContext.Provider>
+                );
+            }
+
+            export default NotificationContext;
+
+        ==> "context" 는 "실제로, 전역으로 퍼질 데이터 값"이며, 앞으로 "이 데이터를 , 지지고 볶고 해서, 전역에서 사용하는 것"이다.
+
+2. [ Context 사용 준비 : useContext from "react"] ===================================================================================
+    : "전역으로, context 가 퍼지도록", "_app.js" 에서, "전부 감싼 이후"(provider 에 의해 하위컴포넌트로 전달되므로), 
+            사용할 곳에, useContext 를 사용하여, context 값을 이용해보자.
+
+    0) 기본사용
+            import {useContext} from "react"
+            import Context from "..."
+
+            function contextFunction(props){
+                ...
+                const ContextCtx = useContext(Context)
+
+                ContextCtx."안에있는함수"
+                ContextCtx."안에있는변수"
+                ...
+                
+            }
+
+        
+    1) "_app.js" 에, "ContextProvider"로 전체를 묶어, "모든 곳에서 context 를 사용할 수 있게 전달"하기
+
+            import Head from "next/head";
+
+            import Layout from "../components/layout/layout";
+            import { NotificationContextProvider } from "../store/notification-context";
+            import "../styles/globals.css";
+
+            function MyApp({ Component, pageProps }) {
+            return (
+    -           <NotificationContextProvider>
+                    <Layout>
+                        <Head>
+                        <meta
+                            name="viewport"
+                            content="initial-scale=1.0, width=device-width"
+                        />
+                        </Head>
+                        <Component {...pageProps} />
+                    </Layout>
+    -           </NotificationContextProvider>
+            );
+            }
+
+            export default MyApp;
+
+        ==> "context 를 제공"하는 것은 "ContextProvider 함수"이다
+
+    2) "모든 화면"에 표시되어야 하므로, "단일 항목으로 import 하면 안되"고, <Layout> 은 여전히, "전체 컴포넌트를 감싸"고 있기 때문에,
+            "<Layout> 에서, 실제로 표시될 notification 을 import 하고, 사용"해보자
+
+        <Layout>
+
+            import { Fragment, useContext } from "react";
+            import HeaderComponent from "./header";
+-           import NotificationContext from "../../store/notification-context";
+            import Notification from "../ui/notification";
+
+            function Layout(props) {
+-           const notificationCtx = useContext(NotificationContext);
+
+-           const activeNotification = notificationCtx.notificationState
+
+            return (
+                <Fragment>
+                    <HeaderComponent />
+                    <main>{props.children}</main>
+-                   {activeNotification && (<Notification
+                          title={activeNotification.title}
+                          message={activeNotification.message}
+                          status={activeNotification.status}
+                        />
+                      )}
+                </Fragment>
+            );
+            }
+            export default Layout;
+
+        ==> "useContext" 를 사용하여, "context 를 불러올 준비"를 하고,
+
+            "NotificationContext" 를 불러와, "context 와 연결"하고
+-               const notificationCtx = useContext(NotificationContext);
+
+            "연결된 context" 에서, "notificationState" 를 불러와, "만약 그 안에 값이 있다면"(activeNotification 이 존재한다면),
+            미리 만들어 놓은, "Notification 컴포넌트" 가 활성화 되도록, "삼항식 혹은 && 조건문"으로 으로 조건문을 만든다.
+-               {activeNotification && <Notification />}
+
+        ==> 이렇게 되면, "createContext" 안에 만들어둔, "activeNotification 안에 값이 들어있을때", 
+            즉, "어디선가 useContext 를 사용"하여, "notificationState 안에 값을 넣었을때", 
+           " Notification 컴포넌트가 활성화되어, 화면상에 보이게 된다."
+
+
+    3) ".hideNotification() 을 사용하기 위해", useContext 를 사용한, "실제 화면에 보일, notification"
+
+-           import { useContext } from "react";
+
+            import classes from "./notification.module.css";
+-           import NotificationContext from "../../store/notification-context";
+
+            function Notification(props) {
+-               const notificationCtx = useContext(NotificationContext);
+
+                const { title, message, status } = props;
+
+                let statusClasses = "";
+
+                if (status === "success") {
+                    statusClasses = classes.success;
+                }
+
+                if (status === "error") {
+                    statusClasses = classes.error;
+                }
+
+                if (status === "pending") {
+                    statusClasses = classes.pending;
+                }
+
+                const activeClasses = `${classes.notification} ${statusClasses}`;
+
+                return (
+-                   <div className={activeClasses} onClick={notificationCtx.hideNotification}>
+                        <h2>{title}</h2>
+                        <p>{message}</p>
+                    </div>
+                );
+            }
+
+            export default Notification;
+
+
+3. [ 본격적인 Context 사용  : useContext from "react"] ===================================================================================
+    : "HTTP 요청"을 할때, "Context 안의 값을 바꿔서", notification 이 실행되게, 없어지게, 변경되게 만든다.
+
+    1) 함수에 따르면, "showNotification" 에 "값을 넣는 것"이 바로, "State 안에 값이 들어가고"
+       " State 안에 들어간 값이 Context 안에 들어가서 바뀌는 것"이기 때문에 , "showNotification" 을 사용하여, 그 안에 값을 넣는다
+
+        export function NotificationContextProvider(props) {
+            const [activeNotification, setActiveNotification] = useState();
+        
+-           function showNotificationHandler(notificationData) {
+-           setActiveNotification(notificationData);
+            }
+            function hideNotificationHandler() {
+            setActiveNotification(null);
+            }
+            
+            const context = {
+-               notificationState: activeNotification,
+                showNotification: showNotificationHandler,
+                hideNotification: hideNotificationHandler,
+            };
+
+    2) 또한, 우리가 화면에 표시하는 "notification 컴포넌트 함수"에는 
+        
+            function Notification(props) {
+                const notificationCtx = useContext(NotificationContext);
+            
+                const { title, message, status } = props;
+
+        => "title", "message", "status" 3가지 값이 필요하므로, "3가지 값을 넣어주어야한다".
+
+    3) [최종 프로세스 정리]
+
+        => "createContext 하여 전체 앱을 감싸"게 함
+        => 전체 앱을 감싸고, "전체 앱 화면에서 전부 표시 가능"해야하므로, "Layout 안에서 작업"하도록 함
+        => "Layout 안에, notification 컴포넌트"를 넣고, "Context 안에 있는 State 값"을 "notification 컴포넌트 안에 props로 넣어줌"
+                (현재 State 에는 아무것도 없기 때문에, 아무것도 화면에 나타나지 않음)
+        => 그러므로, "Layout 안에서, 만약 Context 안에 있는 State 안의 값이 생기면, 화면에 notification 이 나오도록", 조건식으로 넣음
+        
+        => 일단 현 Context 의 목적은, 사인업 값을 넣을때, "넣는 중", "성공", "실패" 를 표시하기 위한 Context 임을 명심
+
+-       => 최종적으로, signup에 값을 넣는  "event-signup 컴포넌트" 안에서,
+-            [fetch 중에는, fetch 중이라는], [fetch 가 성공하면 성공했다]는, [fetch가 실패하면 실패했다]는 "Context 의 값을 넣어줌"
+
+        => 값을 넣는 것은 "Context 안에 있는 State 안의 값을 채워넣어야" 하고,
+        => "함수에 따르면" 그 함수가 바로, "showNotificationHandler(notificationData)"
+
+-       => showNotification({ title : "...", message: "...", status:"..."}) 을 넣어주면 된다.
+
+    4) 실제로 HTTP 요청을 할때, 화면에 Notification 이 표시되도록, showNotification 을 사용해보자
+
+        < signup 컴포넌트 >
+            
+            import styles from "./event-signup.module.css";
+-           import { useRef, useContext } from "react";
+-           import NotificationContext from "../../store/notification-context";
+
+            function ResisterEmail() {
+                const emailRef = useRef();
+-               const notificationCtx = useContext(NotificationContext);
+
+                function resisterEmail(event) {
+                    event.preventDefault();
+
+                    const enteredEmail = emailRef.current.value;
+
+                    const reqBody = {
+                    email: enteredEmail,
+                    };
+
+-                   notificationCtx.showNotification({              // 버튼을 누르면, 시작되는, "데이터 보내는 중" Context
+                    title: "signing up...",
+                    message: "Registering for newsletter",
+                    status: "pending",
+-                   });
+
+                    fetch("/api/signup", {
+                    method: "POST",
+                    body: JSON.stringify(reqBody),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    })
+                    .then((res) => res.json())
+                    .then((data) => {
+-                       notificationCtx.showNotification({              // 데이터가 완벽하게 도착하면, "데이터 전달 성공" Context 
+                        title: "Sucess!",
+                        message: "Successfully Registered for newsletter",
+                        status: "success",
+-                       });
+                    })
+                    .catch((error) => {
+-                       notificationCtx.showNotification({              // 에러가 나면, "데이터 전달 실패" Context
+                        title: "Error!",
+                        message: "Something went wrong!",
+                        status: "error",
+-                       });
+                    });
+            }
+
+    5) 사실 이렇게 되면, "에러가 나더라도, 프로미스 체인에 의해, 데이터가 완벽히 도착하는 것으로 반드시 끝나게 된다."
+        => 그러므로, "res 를 받을때", 
+
+-       "res.ok" 라면 "return res.json()" 으로 코드를 끝내고
+-       "아니라면", "새로운 프로미스 가지를 생성"하여, "에러가 생성되도록 만든다." 
+
+            fetch("/api/signup", {
+                method: "POST",
+                body: JSON.stringify(reqBody),
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+                .then((response) => {
+-                 if (res.ok) {              // response 가 ok 면, 평시대로 res.json() [단, "return"을 하여, "다음 줄은 읽지않고 다음 프로미스로" ]
+                    return res.json();
+                   }
+          
+-                 return res.json().then((data) => {                            // "response가 ok 면", return 에 의해 이 줄을 읽히지 않을것이다
+        -           throw new Error(data.message || "Someting went Wrong!");    // 오류가 난다면, 다음 프로미스로 넘어가지 않도록 Error를 발생시킨다.
+-                 });                                                           // 또한, 돌려받는 데이터에, message가 있다면 출력하고, 아니라면 "Someting went Wrong!" 을 출력한다
+-               })
+                .then((data) => {                           // response가 ok 면, 자연스럽게 이 프로미스가 읽힐 것이고
+                  console.log(data.feedback);
+                  notificationCtx.showNotification({
+                    title: "Sucess!",
+                    message: "Successfully Registered for newsletter",
+                    status: "success",
+                  });
+                })
+                .catch((error) => {                         // response 가 ok 가 아니면, 강제로 코드를 끊고, error 를 throw 했으므로,
+                  notificationCtx.showNotification({            이 에러 코드로 넘어올 것이다.
+                    title: "Error!",
+                    message: "Something went wrong!",
+                    status: "error",
+                  });
+                });
+
+    6) "notification 창을 누르면 hideNotification 함수가 실행되어, Context 안의 값이 지워지므로, 다시 알림창이 사라진다."
+
+        < notification 컴포넌트 >
+
+            import { useContext } from "react";
+
+            import classes from "./notification.module.css";
+-           import NotificationContext from "../../store/notification-context";
+
+            function Notification(props) {
+-               const notificationCtx = useContext(NotificationContext);
+                    ...
+                return (
+-                   <div className={activeClasses} onClick={notificationCtx.hideNotification}>
+                    <h2>{title}</h2>
+                    <p>{message}</p>
+                    </div>
+                );
+
+    7) Timer 사용하여, 자동으로 꺼지게 만들기
+    
+    function hideNotificationTimer() {
+      notificationCtx.hideNotification();
+    }
+  
+    let statusClasses = "";
+  
+    if (status === "success") {
+      statusClasses = classes.success;
+    }
+  
+    if (status === "error") {
+      statusClasses = classes.error;
+    }
+  
+    if (status === "pending") {
+      statusClasses = classes.pending;
+    }
+  
+    const activeClasses = `${classes.notification} ${statusClasses}`;
+    
+    setTimeout(hideNotificationTimer, 3000);
+
+
+        
+    
+
+
+
+    
