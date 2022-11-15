@@ -204,3 +204,27 @@
             body: JSON.stringify(postData),
             headers: {
                 ...
+
+9. [feth 에러] error - ./pages/api/contact-api.js
+    Module parse failed: The top-level-await experiment is not enabled (set experiments.topLevelAwait: true to enabled it)
+    File was processed with these loaders:
+    * ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+    You may need an additional loader to handle the result of these loaders.
+    Error: The top-level-await experiment is not enabled (set experiments.topLevelAwait: true to enabled it)
+
+    <해결>
+
+        DB 연결문제이다.
+
+        MONGODB 연결 코드 다시 확인하고
+        혹시 helper function 을 쓰고있다면, 본문에 써보도록 하고,
+        MONGODB id, password 잘 되어있는지 다시 확인
+
+10. [fs 사용할때, fail to compile error ]fs, path 등 서버측 코드를 API가 아닌, PAGES 폴더안의 컴포넌트에서 사용할때 주의할점
+
+    1. fs 나, fs를 사용하는 help 함수를 불러왔을때,
+        "아예 사용하지 않거나", "서버측 코드(getStaticProps 등...)" 에 사용하지 않았다면
+
+        이놈들이 어디쓸지 모른다고, 오류를 내기 때문에 저장하지 말아야한다!
+
+    2. "만약 오류가 발생했다면, 서버를 다시 껐다 켜줘야한다."

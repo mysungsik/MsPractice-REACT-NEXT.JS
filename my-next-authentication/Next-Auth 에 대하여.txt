@@ -1,0 +1,169 @@
+1. next-auth DOCS 분석
+
+    https://next-auth.js.org/getting-started/introduction
+
+    1) [Getting Started]
+            ...
+        Getting Started :   시작하는 기본틀
+        Client API :        클라이언트 코드에서 auth 를 사용하기
+        REST API :          서버 코드에서, auth 로직 만들기 의 "기본 틀"
+
+            * provider 를 사용하는데, 만약, Credential Provider 라서, 
+                "스스로 만든 로직이라면", REST API에 나오는 폴더명과는 겹치지 말게 할것
+                    => 내장되어 있는 api endpoint 이므로, 중첩되면 안됌
+
+           ...
+        upgrade Guide(v4) : v3(강의) 와 다른점들
+
+    2) [configuration]
+            ...
+        Options : "authOptions 객체를 구성하는 것들"
+                    대표적으로 
+                        -   "provider" : 인증방식을 제공하는 "provider" 를 정하는 옵션
+                                (네이버식 인증(Naver Provider), 구글식 인증(Google Provider), ... 개인이만든 인증(Credential Provider))
+                        -   "session"  : session 을 저장하는 방식을 정하는 옵션
+                                (jwt 로 할거냐, database 로 할거냐, 기간을 얼마나, 업데이트는 얼마마다)
+                        -   "jwt"
+                        -   "pages"
+                            ...
+
+    3) [providers]  : 수많은 인증옵션들을 사용하는 방법을 제공
+
+
+    =============================
+        까지가 일단 배운 내용
+
+2. 기본 Credential("직접만든 인증") provider 의 생성 
+
+-   next-auth 는 "api", "auth", "[...nextauth].js" 안에 만들것
+                     
+        import NextAuth from "next-auth";                                                               // next-auth import
+        import credentials from "next-auth/providers/credentials";                                      // 사용할 provider import "Credential("직접만든") provider"
+        import {checkUserPassword, connectDb, findExsiteUserid,} from "../../../helper/db-util";
+
+        export const authOptions = {                                                                    // authOptions 만들기
+-           session: {                                                                                  // option 1. session
+-             jwt: true,
+            },
+            providers: [                                                                                // option 2. providers
+                credentials({                                                                           // Credential("직접만든") provider 선택
+                    async authorize(credentials) {
+                        const client = connectDb();                                                     // auth 인증절차 시작
+
+                        const findedUser = await findExsiteUserid(client,"userInfo",credentials.id);
+
+                        if (!findedUser) {
+                            client.close()
+                            throw new Error("no user find");
+                        }
+
+                        const isValid = await checkUserPassword(credentials.password,findedUser.password);
+
+                        if (!isValid) {
+                            client.close()
+                            throw new Error("user password is wrong");
+                        }
+                        
+                        client.close();
+-                       return { id: findedUser.id };                                                   // 인증절차 완료되면, jwt 에 넣어줄 데이터 return
+                                                                                // JSON WEB TOKEN 에 포함되는, DATA, "절대 비밀번호 넣지 말것 - 클라이언트에도보임"
+                    },
+                }),
+            ],
+        };
+
+        export default NextAuth;
+
+        
+    ==> 만약 provider 가, 완벽하게 짜여져있는 외부의 provider, 즉, google, naver, safari 등의 provider 라면
+        JWT 를 쓸 이유가 없고, 내부의 로직을 사용할 것이다.
+
+        만약, 인증서를 database 나, EMAIL 을 사용한 방법을 사용한다면,
+            역시나 JWT 가 필요하지 않을것이다.
+
+        JWT 는, 한가지 방법일 뿐이다. 인증서를 제출하는
+
+        현 상황에 "직접 짠 로직을 가지고 AUTH 를 진행하는 CREDENTAIL PROVIDER" 를 사용하는 현 상황에서는
+
+            "JWT 나 DATABASE 가 필수"이고
+
+            "JWT 를 선택했을 뿐이다."
+
+3. AUTH 의 사용(클라이언트측)
+
+    1) "signIn"
+                https://next-auth.js.org/getting-started/client#signin
+
+-       import { signIn } from "next-auth/react";
+            ...
+
+        function LoginFormComponent() {
+
+            ...
+
+            async function submitHandler(e) {
+                e.preventDefault();
+
+                    ...
+
+-               const result = await signIn("credentials", {
+                    redirect: false,
+                    id: id,
+                    password: password,
+-              });
+
+                console.log(result);
+
+        <사용 방법>
+
+            1. [기본]                 :  SignIn("사용한 provider", {redirect 여부})
+
+            2. [데이터 넣은 경우]     :   SignIn("사용한 provider", {redirect 여부, data키:data밸류, data키2:data밸류2 ...})
+
+                ==> 넣은 데이터는,
+
+                    "Credential Provider" 를 "만들때"
+                        
+                        providers: [  
+                            credentials({ 
+        -                       async authorize(credentials) {
+                                    const client = connectDb();   
+                                            ...
+
+                    ==> authorize 안의 파라미터(credentials) 에 들어간다.
+
+                ==> "data키1 : data밸류" 를 넣었다면,
+                    "credentials.data키1" 로써 사용 가능한것
+
+                ==> 즉, Create 할때, "이러한 키 이름으로 만들것이다" 라고 정하고 "인증 로직을 만들었으면",
+                    "사용 할때(SignIn 할때)", next-auth의 SignIn 함수를 사용하면서 "안에 데이터 값을 넣어주어, 비교 하게 만들어", 인증을 성공시키는 것이다. 
+
+        <해석 및 결과>
+        
+            DOCS : https://next-auth.js.org/getting-started/client#signin
+
+            SignIn 함수는 기본적으로, "오류가날 경우 redirect 가 기본 조건으로 정해져있다." => SignIn("provider이름", "URL주소")
+                
+                나는 페이지를 벗어나지 않기위해, redirect 를 false 로 두고, 데이터를 넣어주었다.
+
+            "만약 redirect를 false 로 둔다면"
+                SignIn() 는, "자동적으로 결과값을 반환하며",
+
+-               const result = await signIn("credentials",{redirect:false})
+                console.log(result);
+
+                    성공  : {error: null, status: 200, ok: true, url: 'http://localhost:3000/login'}
+                    실패1 : {error: 'user password is wrong', status: 401, ok: false, url: null}
+                    실패2 : {error: 'no user find', status: 401, ok: false, url: null}
+
+                error 메시지는, "Credential Provider" 를 만들때, 
+-                   에러 조건에 따라 만든, throw Error("에러메시지")
+
+                가 같이 출력되어 나오는 것이다.
+
+                
+                
+
+
+
+            
