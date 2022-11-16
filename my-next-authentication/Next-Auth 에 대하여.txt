@@ -1,3 +1,13 @@
+[INDEX] =======================================================================================
+
+1. next-auth DOCS 분석
+2. 기본 Credential("직접만든 인증") provider 의 생성 [ 누구에게, 인증서를 부여할것인가! validation 로직 짜기]
+3. Client 측에서, next-auth 를 사용 : [provider의 validation에 의거, 유저를 인증하기] => "SignIn() 함수"
+4. Client 측에서, next-auth 를 사용 : [인증된 유저의 정보 확인] => { useSession } HOOK
+5. Client 측에서, next-auth 를 사용 : useSession을 사용해 유저가 authenticated(로그인) 되었을때만 표시되는 profile 링크 표시하기
+
+
+==============================================================================================================================================================================
 1. next-auth DOCS 분석
 
     https://next-auth.js.org/getting-started/introduction
@@ -33,21 +43,21 @@
     =============================
         까지가 일단 배운 내용
 
-2. 기본 Credential("직접만든 인증") provider 의 생성 
+2. 기본 Credential("직접만든 인증") provider 의 생성 [ 누구에게, 인증서를 부여할것인가! validation 로직 짜기]  ================================================
 
--   next-auth 는 "api", "auth", "[...nextauth].js" 안에 만들것
+-   "next-auth validation 옵션 코드 위치 "=>  "api", "auth", "[...nextauth].js" 안에 만들것
                      
         import NextAuth from "next-auth";                                                               // next-auth import
         import credentials from "next-auth/providers/credentials";                                      // 사용할 provider import "Credential("직접만든") provider"
         import {checkUserPassword, connectDb, findExsiteUserid,} from "../../../helper/db-util";
 
         export const authOptions = {                                                                    // authOptions 만들기
--           session: {                                                                                  // option 1. session
+-           session: {                                                                                  // "option 1. session"
 -             jwt: true,
             },
-            providers: [                                                                                // option 2. providers
+            providers: [                                                                                // "option 2. providers"
                 credentials({                                                                           // Credential("직접만든") provider 선택
-                    async authorize(credentials) {
+-                   async authorize(credentials) {                                                      // credential provider 를 선택후, 비동기 함수인 authorize로, 인증 로직 생성
                         const client = connectDb();                                                     // auth 인증절차 시작
 
                         const findedUser = await findExsiteUserid(client,"userInfo",credentials.id);
@@ -65,7 +75,7 @@
                         }
                         
                         client.close();
--                       return { id: findedUser.id };                                                   // 인증절차 완료되면, jwt 에 넣어줄 데이터 return
+-                       return { email: findedUser.id };                        // if check(throw new Error 로 코드멈추게하는)를 통과하고 인증절차 완료되면, jwt 에 넣어줄 데이터 return
                                                                                 // JSON WEB TOKEN 에 포함되는, DATA, "절대 비밀번호 넣지 말것 - 클라이언트에도보임"
                     },
                 }),
@@ -75,13 +85,20 @@
         export default NextAuth;
 
         
-    ==> 만약 provider 가, 완벽하게 짜여져있는 외부의 provider, 즉, google, naver, safari 등의 provider 라면
-        JWT 를 쓸 이유가 없고, 내부의 로직을 사용할 것이다.
+-   ==> *** "return 값으로, session 에 저장할 수 있는 데이터"는 "정해져있다." 
+            1. email    
+            2. name     
+            3. image
+-       이외에는 아무것도 반환되지 않는다.
+
+
+    ==> 만약 provider 가, "완벽하게 짜여져있는 외부의 provider", 즉, "google, naver, safari 등의 provider" 라면
+        JWT 를 쓸 이유가 없고, 그 provider의 내부의 로직을 사용할 것이다.
 
         만약, 인증서를 database 나, EMAIL 을 사용한 방법을 사용한다면,
-            역시나 JWT 가 필요하지 않을것이다.
+        역시나 JWT 가 필요하지 않을것이다.
 
-        JWT 는, 한가지 방법일 뿐이다. 인증서를 제출하는
+        JWT 는, 한가지 방법일 뿐이다. 인증서를 제출하는.
 
         현 상황에 "직접 짠 로직을 가지고 AUTH 를 진행하는 CREDENTAIL PROVIDER" 를 사용하는 현 상황에서는
 
@@ -89,32 +106,13 @@
 
             "JWT 를 선택했을 뿐이다."
 
-3. AUTH 의 사용(클라이언트측)
+    [Next-AUTH 의 옵션들] : https://next-auth.js.org/configuration/options
 
-    1) "signIn"
-                https://next-auth.js.org/getting-started/client#signin
 
--       import { signIn } from "next-auth/react";
-            ...
-
-        function LoginFormComponent() {
-
-            ...
-
-            async function submitHandler(e) {
-                e.preventDefault();
-
-                    ...
-
--               const result = await signIn("credentials", {
-                    redirect: false,
-                    id: id,
-                    password: password,
--              });
-
-                console.log(result);
+3. Client 측에서, next-auth 를 사용 : [provider의 validation에 의거, 유저를 인증하기] => "SignIn() 함수"
 
         <사용 방법>
+                https://next-auth.js.org/getting-started/client#signin
 
             1. [기본]                 :  SignIn("사용한 provider", {redirect 여부})
 
@@ -130,24 +128,50 @@
                                     const client = connectDb();   
                                             ...
 
-                    ==> authorize 안의 파라미터(credentials) 에 들어간다.
+-                   ==> authorize 안의 파라미터(credentials) 에 "argument"로 들어간다.
 
                 ==> "data키1 : data밸류" 를 넣었다면,
                     "credentials.data키1" 로써 사용 가능한것
 
                 ==> 즉, Create 할때, "이러한 키 이름으로 만들것이다" 라고 정하고 "인증 로직을 만들었으면",
                     "사용 할때(SignIn 할때)", next-auth의 SignIn 함수를 사용하면서 "안에 데이터 값을 넣어주어, 비교 하게 만들어", 인증을 성공시키는 것이다. 
+       
 
-        <해석 및 결과>
+        < 코드 >
+
+        <Component - loginForm.js >
+
+-           import { signIn } from "next-auth/react";
+                ...
+
+            function LoginFormComponent() {
+
+                ...
+
+                async function submitHandler(e) {
+                    e.preventDefault();
+
+                        ...
+
+-                   const result = await signIn("credentials", {
+                        redirect: false,
+                        id: id,                                         // 이 "id" 와 "password" 가, provider 의 credentials 파라미터 안에 들어가고, "인증을 확인"
+                        password: password,
+-                   });
+
+                    console.log(result);
+
+
+        <해석>
         
             DOCS : https://next-auth.js.org/getting-started/client#signin
 
             SignIn 함수는 기본적으로, "오류가날 경우 redirect 가 기본 조건으로 정해져있다." => SignIn("provider이름", "URL주소")
                 
-                나는 페이지를 벗어나지 않기위해, redirect 를 false 로 두고, 데이터를 넣어주었다.
+                나는 "페이지를 벗어나지 않기위해", "redirect 를 false" 로 두고, "데이터를 넣어주었다".
 
             "만약 redirect를 false 로 둔다면"
-                SignIn() 는, "자동적으로 결과값을 반환하며",
+-               SignIn() 는, "자동적으로 결과값을 반환하며",
 
 -               const result = await signIn("credentials",{redirect:false})
                 console.log(result);
@@ -161,9 +185,258 @@
 
                 가 같이 출력되어 나오는 것이다.
 
-                
-                
+        <결과>
 
+            성공적으로 SignIn (Login) 에 성공하게 되면 "next-auth" 는 "자동적으로 Cookie를 생성한다" 
+                 => 이 안에 "token" 이 들어있다.
 
-
+        <이후에는>
             
+            "로그인된 상태" 를 "State"에 저장하여, "로그인 유무를 판단하고" => [useSession 이용]
+            "쿠키(세션)"을 이용하여, "제한된 API를 사용하거나", "클라이언트 측에서, 보호된 리소스를 보이게 할 수 있게 만들 수 있다."
+                
+4. Client 측에서, next-auth 를 사용 : [인증된 유저의 정보 확인] => { useSession } HOOK
+
+    <설명>
+
+        0. 기본사용법
+        
+            import { useSession } from "next-auth/react"
+
+            const {data:session, status} = useSession()
+
+            console.log(session)    : session 에는, "nextauth provider" 를 만들어 "JWT 를 부여"할때, "return 한 값"이 들어있다.
+            console.log(status)     : status 에는, "nextauth provider" 를 만들어 "JWT 를 부여"할때 "throw new Error" 를 통과하고, return 되었다면, 인증여부가 자동으로 부여된다.
+
+                * "data.session 이 아니고", 사용시 그냥 "session" 으로 쓰는것이다.
+
+        2. useSession Hook 은 "현재의 로그인 상태"와, "유저의 정보"를 알 수 있는, "next-auth 에서 제공하는 HOOK"이다
+        
+        3. "useSession은 Context" 이다.  이 말인 즉, 만들어두면, "모든 페이지에서" 사용가능하다는 말이다.
+
+        ==> "Context" 로 사용하기 위한, "사용 준비가 필요하다"
+
+-   <사용준비>
+        https://next-auth.js.org/getting-started/upgrade-v4#sessionprovider
+
+        1. _app.js 에 가서, "SessionProvider" 를 import 한 후에, "전체 app을 감싸준다."
+
+        2. MyApp 의 "파라미터"에, "pageProps:{session, ...pageProps} 를 추가"한다.
+
+                import "../styles/globals.css";
+                import Layout from "../components/ui/layout";
+                import { SessionProvider } from "next-auth/react";
+
+                function MyApp({ Component, pageProps: { session, ...pageProps } }) {
+                    return (
+                        <SessionProvider session={session}>
+                            <Layout>
+                                <Component {...pageProps} />
+                            </Layout>
+                        </SessionProvider>
+                    );
+                    }
+
+                export default MyApp;
+
+-       ==> 이제 Context 로 사용 가능하다
+        
+    <기본사용>
+
+-       [layout-header.js]
+
+            import { useSession } from "next-auth/react"
+
+            const {data:session, status} = useSession()
+
+            console.log(data.session)                   // {user: {…}, expires: '2022-12-16T02:59:53.428Z'}
+            console.log(status)                         // authenticated , unauthenticated , loading
+
+5. Client 측에서, next-auth 를 사용 : useSession을 사용해 유저가 authenticated(로그인) 되었을때만 표시되는 profile 링크 표시하기
+
+    <layout-header.js>
+
+
+        import Link from "next/link";
+        import { useSession } from "next-auth/react";
+                    ...
+
+        function LayoutHeader() {
+        const { data: session, status } = useSession();
+
+        return (
+            <Fragment>
+            <div className={styles.header}>
+                <div>Logo</div>
+                    ...
+
+               {status === "authenticated" && (
+                    <li>
+                        <Link href={"/profile"}> profile</Link>
+                    </li>
+                )}
+                    ...
+        );
+        }
+
+        export default LayoutHeader;
+
+
+6. Client 측에서, next-auth 를 사용 : LogOut 시키기 => SignOut()
+
+    <설명>
+
+        signOut 함수도, signIn 함수와 같이, 기본적으로 redirect 를 지원하므로, 그러고 싶지 않다면, false로
+        
+        redirect 하고싶다면, URL 을 넣어준다.
+
+
+    <사용방법>
+
+        import { signOut } from "next-auth/react"
+
+        export default () => <button onClick={() => signOut()}>Sign out</button>
+
+    <코드>
+            import Link from "next/link";
+            import { useSession, signOut } from "next-auth/react";
+
+            function LayoutHeader() {
+                const { data: session, status } = useSession();
+
+                function logOut() {
+-                   const result = signOut({ callbackUrl: "/" });
+                }
+
+                return (
+                    <Fragment>
+                        ...
+
+                            {status === "authenticated" && (
+-                               <button onClick={logOut}> logout</button>
+                            )}
+
+                        </ul>
+                    </div>
+                    </Fragment>
+                );
+            }
+
+7. Client 측에서, next-auth 를 사용 : "페이지 보호하기" useSession 의 status 를 이용하여!
+
+    : status 가 "loading", "unauthenticated" 일때, loading 을 띄우고, 강제로 페이지를 이동시키기
+    
+
+    <보호하기 1. profile Page>
+        import { useSession } from "next-auth/react";
+        import { useRouter } from "next/router";
+
+        function UserProfile() {
+            const router = useRouter();
+-           const { data: session, status } = useSession();
+
+-           if (status === "loading") {
+                return <div>...loading</div>;
+            }
+
+-           if (status === "unauthenticated") {
+                router.push("/");
+                //router.replace("/")
+                //window.location.href="/"
+            }
+
+            return (
+                <section className={classes.profile}>
+                    <h1>Your User Profile</h1>
+                    <ProfileForm />
+                </section>
+            );
+            }
+
+        export default UserProfile;
+
+    <보호하기 2. loginPage>
+    
+        import LoginForm from "../components/login-component/login-form";
+        import { useSession } from "next-auth/react";
+        import { useRouter } from "next/router";
+
+            function LoginPage() {
+            const { data: session, status } = useSession();
+            const router = useRouter();
+
+            if (status === "authenticated") {
+                router.replace("/");
+                return <div></div>;                         // return 이후로 넘어가서, LoginForm 이 잠깐 보이는것을 방지하려고
+            }
+            return (
+                <div>
+                    <LoginForm />
+                </div>
+            );
+            }
+
+        export default LoginPage;
+
+
+8. Client 측에서, next-auth 를 사용 : 클라이언트 안의 "서버측코드" "getServerSideProps" 에서, session 사용하기 => {getSession}
+
+-   <기본과 주의할점>
+
+        1. "useSession" 은 "클라이언트 사이드만을 위한" 코드이다
+
+            그러므로, "getSession" 을 사용하여, "session 에 접근"해야만 한다!
+
+        2. [동적 페이지] 에는, 클라이언트 사이드 내의, 서버측코드 안에 "getSession" 조차 사용할 수 없다. 정적 페이지에만 사용하도록하자
+
+        3. "getStaticProps 도 서버측 코드지만", 세션을 관리하기에는, revalidate를 0.1초 씩 할 수도 없는 노릇,
+
+                "getServerSideProps" 를 사용하여, "오는 모든 요청마다, revalidate 되게 만들어 사용"하여야 하므로
+
+-               getServerSideProps 를 사용하도록한다.
+
+    <사용방법>
+            
+        getServerSideProps 안에, "req" 를 통해, "context.req 를 넣어준다."
+
+    <코드>
+
+            import { getSession } from "next-auth/react";
+
+            function Homepage(props) {
+                console.log(props.result);
+                return (
+                    <div>
+                        <h1> WelCome!</h1>
+                    </div>
+                );
+                }
+
+-           export async function getServerSideProps(context) {
+                const result = await getSession({ req: context.req });
+
+            return {
+                props: {
+                result: result,
+                },
+            };
+            }
+
+            export default Homepage;
+
+    <결과>
+
+        반환 결과로는 "유저의 세션정보가 반환된다."
+
+        {user: {…}, expires: '2022-12-16T05:47:28.465Z'}
+        
+            => user : {name: 'ms', email: 'test'}
+
+    <응용>
+
+        "useSession" 처럼 "status" 는 없다 해도,
+
+        getSession 에서 "result(= session) 이 있다, 없다" 로 "로그인 유무를 판단"가능하다.
+
+
+9. 

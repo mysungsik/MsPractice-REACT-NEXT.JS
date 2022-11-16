@@ -1,17 +1,10 @@
-import { useRouter } from "next/router";
+import UserProfile from "../components/profile-component/user-profile";
 
-function ProfilePage() {
-  const router = useRouter();
-  const id = router.query.userid;
-
-  if (!id) {
-    return <div>...loading</div>;
-  }
-
+function ProfilePage(props) {
+  console.dir(props.session);
   return (
     <div>
-      <h1> ProfilePage!</h1>
-      <p>{id}</p>
+      <UserProfile />
     </div>
   );
 }

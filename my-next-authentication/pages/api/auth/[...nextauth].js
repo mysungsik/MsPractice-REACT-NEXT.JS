@@ -37,7 +37,11 @@ export const authOptions = {
         }
 
         client.close();
-        return { id: findedUser.id };
+        return {
+          email: findedUser.id,
+          name: "ms",
+          image: null,
+        };
       },
     }),
   ],
