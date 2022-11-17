@@ -26,7 +26,7 @@ function LayoutHeader() {
           )}
           {status === "authenticated" && (
             <li>
-              <Link href={"/profile"}> profile</Link>
+              <Link href={`/${session.user.email}`}> profile</Link>
             </li>
           )}
           {status === "authenticated" && (

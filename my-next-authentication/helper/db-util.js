@@ -31,11 +31,6 @@ export async function findExsiteUserid(client, collectionName, userid) {
   return findResult;
 }
 
-export async function checkUserPassword(password,passwordFromDb){
-  const result = await bcrypt.compare(password, passwordFromDb)
-  return result
-}
-
 export async function findSameID(client, collectionName, userid) {
   await client.connect;
 
@@ -51,7 +46,28 @@ export async function findSameID(client, collectionName, userid) {
   }
 }
 
+export async function checkUserPassword(password, passwordFromDb) {
+  const result = await bcrypt.compare(password, passwordFromDb);
+  return result;
+}
+
 export async function hashPassword(password) {
   const hashedPassword = await bcrypt.hash(password, 10);
   return hashedPassword;
+}
+
+export async function changeUserPassword(
+  client,
+  collectionName,
+  id,
+  newPassword
+) {
+  await client.connect();
+
+  const updateResult = await client
+    .db("auth-demo")
+    .collection(collectionName)
+    .updateOne({ id: id }, { $set: { password: newPassword } });
+
+  return updateResult;
 }

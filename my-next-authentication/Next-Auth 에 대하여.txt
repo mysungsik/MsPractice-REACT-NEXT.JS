@@ -249,7 +249,7 @@
 
             const {data:session, status} = useSession()
 
-            console.log(data.session)                   // {user: {…}, expires: '2022-12-16T02:59:53.428Z'}
+            console.log(session)                   // {user: {…}, expires: '2022-12-16T02:59:53.428Z'}
             console.log(status)                         // authenticated , unauthenticated , loading
 
 5. Client 측에서, next-auth 를 사용 : useSession을 사용해 유저가 authenticated(로그인) 되었을때만 표시되는 profile 링크 표시하기
@@ -439,4 +439,145 @@
         getSession 에서 "result(= session) 이 있다, 없다" 로 "로그인 유무를 판단"가능하다.
 
 
-9. 
+9. 서버사이드 보호 = [API 보호] ****    WITH. [서버측에서, session 을 가져와, 유저가, 인증되었는지, 또한, 인증된 유저의 정보를 가져오기]
+    
+    : 만들어놓은 웹사이트로만, API에 접근할수 있는 것이 아니다.
+
+        POSTMAN 사이트, 등의 API 에 접근 할 수 있는, 외부 사이트가 많이 존재한다. 심지어는 간단한 명령커맨드로도 가능하다.
+
+-       클라이언트만 보호하는 것이 아니고, 접근하는 API 또한 보호하게 만들어야한다.
+
+
+    <API>
+        =========================================
+
+-           import { getSession } from "next-auth/react";
+
+            async function handler(req, res) {
+                
+                if (req.method !== "PATCH") {
+                    return;
+                }
+
+    -           const session = await getSession({ req: req });
+
+    -           if (!session) {
+                        res.status(401).json({ message: "not authenticated" });
+                    return;
+                }
+                }
+
+            export default handler;
+
+        ==============================================
+
+-       ==> "if(!session)"  이게, API 를, 인증되지 않은 사용자로부터 보호하는 가장 중요한 키워드다
+
+
+10. "보호된" [API 와 클라이언트로], 비밀번호 변경 페이지 만들고 관리 
+
+    < 클라이언트 :  profile-form.js >
+
+            import classes from "./profile-form.module.css";
+            import { useSession } from "next-auth/react";
+            import { useRef } from "react";
+            
+            function ProfileForm() {
+            const pasaswordRef = useRef();
+            const { data: session, status } = useSession();
+            
+            async function changePassword(e) {
+                e.preventDefault();
+                const newPassword = pasaswordRef.current.value;
+            
+                const response = await fetch("/api/user/change-password", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    id: session.user.email,
+                    newPasasword: newPassword,
+                }),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                });
+            
+                const responseData = await response.json();
+            }
+            
+            return (
+                <form className={classes.form}>
+                <div className={classes.control}>
+                    <label htmlFor="new-password">New Password</label>
+                    <input type="password" id="new-password" ref={pasaswordRef} />
+                </div>
+                <div className={classes.control}>
+                    <label htmlFor="old-password">Old Password</label>
+                    <input type="password" id="old-password" />
+                </div>
+                <div className={classes.action}>
+                    <button onClick={changePassword}>Change Password</button>
+                </div>
+                </form>
+            );
+            }
+            
+            export default ProfileForm;
+
+    < API : change-password.js >
+
+            import { getSession } from "next-auth/react";
+            import { changeUserPassword, connectDb } from "../../../helper/db-util";
+            import bcrypt from "bcrypt";
+
+            async function handler(req, res) {
+            if (req.method !== "PATCH") {
+                return;
+            }
+
+            const session = await getSession({ req: req });
+
+            if (!session) {
+                res.status(401).json({ message: "not authenticated" });
+                return;
+            }
+
+            const { newPasasword, id } = req.body;
+
+            const hashedPassword = await bcrypt.hash(newPasasword, 10);
+
+            const client = await connectDb();
+
+            const changePassword = await changeUserPassword(client,"userInfo",id,hashedPassword);
+
+            if (!changePassword) {
+                res.status(201).json({ message: "FAIL" });
+            }
+
+            res.status(200).json({ message: "success", data: changePassword });
+
+            client.close();
+            }
+
+            export default handler;
+
+        [이후에는]
+-       // user로부터 받은 정보 validation추가
+-       // oldpassword 도 받아서, id 뿐 아니라, oldPassword 도 같은 경우만 , 비밀번호 변경되게 추가
+-       // 또한 id 받아올때, props, props, ... 해서 Page 에서 오지 말고, 그냥 컴포넌트에서 useSession 쓰면 한번에 와짐
+
+
+11. 마지막. 배포 할시 NEXT-AUTH
+
+    https://next-auth.js.org/getting-started/example#deploying-to-production
+
+    배포를 할 때에는,
+
+    NEXTAUTH_URL=https://example.com
+
+    이 환경변수를 꼭 추가해서, 배포하도록한다.
+
+    "URL 은 실제 사이트의 URL" 을 적고
+
+    heroku 나, vercel 에 전부, 환경변수 적는 칸이 있으니, 그곳에 적으면 되겠다.
+
+        
